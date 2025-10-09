@@ -1,3 +1,21 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Estilo suave al fondo del formulario */
+body {
+    background-color: #f8f8f8;
+}
+
+button {
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    transform: scale(1.02);
+}
+
+body {
+    font-family: 'Montserrat', sans-serif;
+}
+
