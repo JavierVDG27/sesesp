@@ -76,7 +76,7 @@
 
             <!-- Footer -->
             <footer class="mt-10 text-center text-xs text-gray-500">
-                &copy; {{ date('Y') }} Mi Institución. Todos los derechos reservados.
+                &copy; {{ date('Y') }} SESESP. Todos los derechos reservados.
             </footer>
         </div>
     </div>
