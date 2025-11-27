@@ -68,16 +68,6 @@
                 </div>
             </form>
 
-            <!-- Enlace de registro -->
-            @if (Route::has('register'))
-            <p class="mt-6 text-center text-sm text-gray-600">
-                ¿No tienes cuenta?
-                <a href="{{ route('register') }}" class="font-semibold text-[#9F2241] hover:text-[#691C32]">
-                    Regístrate aquí
-                </a>
-            </p>
-            @endif
-
             <!-- Footer -->
             <footer class="mt-10 text-center text-xs text-gray-500">
                 &copy; {{ date('Y') }} SESESP. Todos los derechos reservados.

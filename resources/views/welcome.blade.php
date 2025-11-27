@@ -52,10 +52,6 @@
                     en la Secretaría de Seguridad Pública
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="{{ route('register') }}" 
-                       class="bg-white text-[#691C32] px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition shadow-lg">
-                        Crear Cuenta
-                    </a>
                     <a href="{{ route('login') }}" 
                        class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-[#691C32] transition">
                         Acceso al Sistema
