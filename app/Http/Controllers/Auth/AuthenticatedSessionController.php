@@ -54,18 +54,29 @@ public function store(LoginRequest $request)
     }
 
     // Redirecciones según rol
-    if ($user->role->nombre === 'admin') {
+    if ($user->role->name === 'admin') {
         return redirect()->route('admin.dashboard');
     }
 
-    if ($user->role->nombre === 'SESESP') {
+    if ($user->role->name === 'SESESP') {
         return redirect()->route('dependencia.dashboard');
     }
 
+    if ($user->role->name === 'capturista') {
+        return redirect()->route('capturista.dashboard');
+    }
+
+    if ($user->role->name === 'validador') {
+        return redirect()->route('validador.dashboard');
+    }
+
+    if ($user->role->name === 'lector') {
+        return redirect()->route('lector.dashboard');
+    }
     return redirect()->route('dashboard');
 }
 
-
+    
     /**
      * Destroy an authenticated session.
      */

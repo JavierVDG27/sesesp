@@ -45,5 +45,27 @@ Route::middleware(['auth', 'role:dependencia'])->group(function () {
     })->name('dependencia.dashboard');
 });
 
+// Rutas para CAPTURISTA
+Route::middleware(['auth', 'role:capturista'])->group(function () {
+    Route::get('/capturista/dashboard', function () {
+        return view('capturista.dashboard');
+    })->name('capturista.dashboard');
+});
+
+// Rutas para VALIDADOR
+Route::middleware(['auth', 'role:validador'])->group(function () {
+    Route::get('/validador/dashboard', function () {
+        return view('validador.dashboard');
+    })->name('validador.dashboard');
+});
+
+// Rutas para LECTOR
+Route::middleware(['auth', 'role:lector'])->group(function () {
+    Route::get('/lector/dashboard', function () {
+        return "Panel del Lector";
+    })->name('lector.dashboard');
+});
+
+
 // Auth Breeze
 require __DIR__.'/auth.php';

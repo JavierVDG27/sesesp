@@ -10,12 +10,15 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'role_id',
-    ];
+protected $fillable = [
+    'nombres',
+    'apellido_paterno',
+    'apellido_materno',
+    'email',
+    'password',
+    'role_id',
+    'institucion_id',
+];
 
     protected $hidden = [
         'password',
@@ -32,6 +35,12 @@ class User extends Authenticatable
 
     public function role()
     {
-        return $this->belongsTo(Role::class);
+        return $this->belongsTo(Role::class, 'role_id');
     }
+
+    public function institucion()
+    {
+        return $this->belongsTo(Institucion::class, 'institucion_id');
+    }
+
 }

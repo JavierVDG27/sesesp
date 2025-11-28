@@ -13,17 +13,26 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('nombres');
+            $table->string('apellido_paterno');
+            $table->string('apellido_materno')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
 
             // Rol del usuario
             $table->foreignId('role_id')
-                ->default(3) // Capturista por defecto
+                ->default(3)
                 ->constrained('roles')
                 ->cascadeOnUpdate()
                 ->cascadeOnDelete();
+
+            // Institucion del usuario
+            $table->foreignId('institucion_id')
+                ->nullable()
+                ->constrained('instituciones')
+                ->cascadeOnUpdate()
+                ->nullOnDelete();
 
             $table->rememberToken();
             $table->timestamps();

@@ -1,5 +1,5 @@
 @php
-    $dashboardUrl = auth()->user()->role->nombre === 'admin'
+    $dashboardUrl = auth()->user()->role->name === 'admin'
         ? route('admin.dashboard')
         : route('dashboard');
 @endphp
@@ -38,7 +38,13 @@
                     <button @click="open = !open"
                             class="flex items-center text-lg font-semibold text-black hover:text-[#9F2241] transition">
 
-                        <div>{{ Auth::user()->name }}</div>
+                        <div>
+                            {{ Auth::user()->nombres }}
+                            - {{ ucfirst(Auth::user()->role->name) }}
+                            @if(Auth::user()->institucion)
+                                | {{ Auth::user()->institucion->siglas }}
+                            @endif
+                        </div>
 
                         <div class="ms-1">
                             <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
@@ -51,28 +57,32 @@
 
                     </button>
 
-                    <!-- Dropdown -->
-                    <div x-show="open"
-                        x-transition
-                        class="absolute z-50 mt-2 w-48 rounded-md shadow-lg end-0 bg-white">
+                <!-- Dropdown -->
+                <div x-show="open"
+                    x-transition
+                    class="absolute z-50 mt-2 w-48 rounded-md shadow-lg end-0 bg-white">
 
-                        <div class="rounded-md shadow-lg ring-1 ring-black ring-opacity-5 py-1 bg-[#9F2241]">
+                    <div class="rounded-md shadow-lg ring-1 ring-black ring-opacity-5 py-1 bg-[#9F2241]">
 
+                        {{-- Solo los administradores pueden ver "Perfil" --}}
+                        @if(Auth::user()->role->name === 'admin')
                             <a href="{{ route('profile.edit') }}"
                                 class="block w-full px-4 py-2 text-sm text-white hover:bg-[#691C32]">
                                 Perfil
                             </a>
+                        @endif
 
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <button
-                                    class="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#691C32]">
-                                    Cerrar sesión
-                                </button>
-                            </form>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button
+                                class="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#691C32]">
+                                Cerrar sesión
+                            </button>
+                        </form>
 
-                        </div>
                     </div>
+                </div>
+
 
                 </div>
             </div>

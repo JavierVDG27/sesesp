@@ -1,3 +1,4 @@
+{{-- resources/views/admin/users/edit.blade.php --}}
 <x-app-layout>
 
     <x-slot name="header">
@@ -23,18 +24,24 @@
 
                     {{-- Nombre --}}
                     <div class="mb-4">
-                        <label class="block text-gray-700 font-medium">Nombre</label>
-                        <input type="text" name="name" value="{{ old('name', $user->name) }}"
+                        <label class="block text-gray-700 font-medium">Nombre completo</label>
+                        <input type="text" name="name"
+                            value="{{ old('name', $user->name) }}"
                             class="w-full mt-1 rounded-lg border-gray-300">
-                        @error('name') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
+                        @error('name')
+                            <p class="text-red-600 text-sm">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     {{-- Email --}}
                     <div class="mb-4">
-                        <label class="block text-gray-700 font-medium">Correo</label>
-                        <input type="email" name="email" value="{{ old('email', $user->email) }}"
+                        <label class="block text-gray-700 font-medium">Correo electrónico</label>
+                        <input type="email" name="email"
+                            value="{{ old('email', $user->email) }}"
                             class="w-full mt-1 rounded-lg border-gray-300">
-                        @error('email') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
+                        @error('email')
+                            <p class="text-red-600 text-sm">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     {{-- Rol --}}
@@ -42,34 +49,37 @@
                         <label class="block text-gray-700 font-medium">Rol</label>
                         <select name="role_id" class="w-full mt-1 rounded-lg border-gray-300">
                             @foreach($roles as $role)
-                                <option value="{{ $role->id }}" 
-                                    @if($user->role_id == $role->id) selected @endif>
+                                <option value="{{ $role->id }}"
+                                    {{ $user->role_id == $role->id ? 'selected' : '' }}>
                                     {{ ucfirst($role->name) }}
                                 </option>
                             @endforeach
                         </select>
+                        @error('role_id')
+                            <p class="text-red-600 text-sm">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Institución --}}
+                    <div class="mb-6">
+                        <label class="block text-gray-700 font-medium">Institución</label>
+
+                        <select name="institucion_id" class="w-full mt-1 rounded-lg border-gray-300">
+                            <option value="" disabled>Seleccione una institución</option>
+
+                            @foreach($instituciones as $inst)
+                                <option value="{{ $inst->id }}"
+                                    {{ $user->institucion_id == $inst->id ? 'selected' : '' }}>
+                                    {{ $inst->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        @error('institucion_id')
+                            <p class="text-red-600 text-sm">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     {{-- Password --}}
                     <div class="mb-6">
-                        <label class="block text-gray-700 font-medium">Nueva contraseña (opcional)</label>
-                        <input type="password" name="password"
-                            class="w-full mt-1 rounded-lg border-gray-300">
-                        <p class="text-gray-500 text-sm">Déjala vacía si no deseas cambiarla.</p>
-                        @error('password') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
-                    </div>
-
-                    <div class="flex justify-end">
-                        <button type="submit"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg">
-                            Guardar Cambios
-                        </button>
-                    </div>
-
-                </form>
-
-            </div>
-        </div>
-    </div>
-
-</x-app-layout>
+                        <label class="blo

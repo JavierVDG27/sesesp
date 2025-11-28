@@ -2,7 +2,7 @@
 <x-app-layout>
 
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="font-semibold text-xl text-white leading-tigh">
             Crear nuevo usuario
         </h2>
     </x-slot>
@@ -22,17 +22,37 @@
                 <form action="{{ route('admin.users.store') }}" method="POST">
                     @csrf
 
-                    {{-- Nombre --}}
+                    {{-- Nombres --}}
                     <div class="mb-4">
-                        <label for="name" class="block font-medium text-sm text-gray-700">
-                            Nombre completo
-                        </label>
-                        <input type="text" name="name" id="name"
-                            value="{{ old('name') }}"
+                        <label for="nombres" class="block font-medium text-sm text-gray-700">Nombres</label>
+                        <input type="text" name="nombres" id="nombres"
+                            value="{{ old('nombres') }}"
                             class="mt-1 block w-full rounded-lg border-gray-300"
                             required>
+                        @error('nombres')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
 
-                        @error('name')
+                    {{-- Apellido paterno --}}
+                    <div class="mb-4">
+                        <label for="apellido_paterno" class="block font-medium text-sm text-gray-700">Apellido paterno</label>
+                        <input type="text" name="apellido_paterno" id="apellido_paterno"
+                            value="{{ old('apellido_paterno') }}"
+                            class="mt-1 block w-full rounded-lg border-gray-300"
+                            required>
+                        @error('apellido_paterno')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- Apellido materno --}}
+                    <div class="mb-4">
+                        <label for="apellido_materno" class="block font-medium text-sm text-gray-700">Apellido materno</label>
+                        <input type="text" name="apellido_materno" id="apellido_materno"
+                            value="{{ old('apellido_materno') }}"
+                            class="mt-1 block w-full rounded-lg border-gray-300">
+                        @error('apellido_materno')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
                     </div>
@@ -54,12 +74,15 @@
 
                     {{-- Password --}}
                     <div class="mb-4">
-                        <label for="password" class="block font-medium text-sm text-gray-700">
-                            Contraseña
-                        </label>
+                        <label for="password" class="block font-medium text-sm text-gray-700">Contraseña</label>
                         <input type="password" name="password" id="password"
+                            placeholder="Mínimo 8 caracteres, incluir mayúsculas, minúsculas y números"
                             class="mt-1 block w-full rounded-lg border-gray-300"
                             required>
+
+                        <p class="text-gray-500 text-sm mt-1">
+                            La contraseña debe tener al menos 8 caracteres e incluir letras mayúsculas, minúsculas y números.
+                        </p>
 
                         @error('password')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
@@ -85,6 +108,30 @@
                         </select>
 
                         @error('role_id')
+                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    {{-- Institución --}}
+                    <div class="mb-6">
+                        <label for="institucion_id" class="block font-medium text-sm text-gray-700">
+                            Institución
+                        </label>
+
+                        <select name="institucion_id" id="institucion_id"
+                            class="mt-1 block w-full rounded-lg border-gray-300"
+                            required>
+
+                            <option value="" disabled selected>Seleccione una institución</option>
+
+                            @foreach($instituciones as $inst)
+                                <option value="{{ $inst->id }}">
+                                    {{ $inst->nombre }}
+                                </option>
+                            @endforeach
+
+                        </select>
+
+                        @error('institucion_id')
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
                     </div>

@@ -41,7 +41,7 @@
                     <tbody>
                         @foreach($users as $user)
                             <tr class="border-b">
-                                <td class="py-3">{{ $user->name }}</td>
+                                <td class="py-3">{{ $user->nombres }}</td>
                                 <td class="py-3">{{ $user->email }}</td>
                                 <td class="py-3">{{ ucfirst($user->role->name) }}</td>
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Institucion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -14,7 +15,7 @@ class UserManagementController extends Controller
     public function index()
     {
         return view('admin.users.index', [
-            'users' => User::with('role')->paginate(10)
+            'users' => User::with(['role','institucion'])->paginate(10)
         ]);
     }
 
@@ -22,7 +23,8 @@ class UserManagementController extends Controller
     public function create()
     {
         return view('admin.users.create', [
-            'roles' => Role::all()
+            'roles' => Role::all(),
+            'instituciones' => Institucion::all()
         ]);
     }
 
@@ -30,17 +32,31 @@ class UserManagementController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-            'role_id'  => 'required|exists:roles,id',
+            'nombres'            => 'required|string|max:255',
+            'apellido_paterno'   => 'required|string|max:255',
+            'apellido_materno'   => 'nullable|string|max:255',
+            'email'              => 'required|email|unique:users,email',
+            'password'           => [
+                'required',
+                'string',
+                'min:8',
+                'regex:/[A-Z]/',
+                'regex:/[a-z]/',
+                'regex:/[0-9]/',
+                'regex:/[^A-Za-z0-9]/',
+            ],
+            'role_id'            => 'required|exists:roles,id',
+            'institucion_id'     => 'required|exists:instituciones,id',
         ]);
 
         User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'password' => Hash::make($request->password),
-            'role_id'  => $request->role_id,
+            'nombres'          => $request->nombres,
+            'apellido_paterno' => $request->apellido_paterno,
+            'apellido_materno' => $request->apellido_materno,
+            'email'            => $request->email,
+            'password'         => Hash::make($request->password),
+            'role_id'          => $request->role_id,
+            'institucion_id'   => $request->institucion_id,
         ]);
 
         return redirect()->route('admin.users.index')
@@ -51,8 +67,9 @@ class UserManagementController extends Controller
     public function edit(User $user)
     {
         return view('admin.users.edit', [
-            'user'  => $user,
-            'roles' => Role::all()
+            'user'          => $user,
+            'roles'         => Role::all(),
+            'instituciones' => Institucion::all()
         ]);
     }
 
@@ -60,17 +77,31 @@ class UserManagementController extends Controller
     public function update(Request $request, User $user)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => "required|email|unique:users,email,$user->id",
-            'role_id'  => 'required|exists:roles,id',
-            'password' => 'nullable|string|min:8',
+            'nombres'            => 'required|string|max:255',
+            'apellido_paterno'   => 'required|string|max:255',
+            'apellido_materno'   => 'nullable|string|max:255',
+            'email'              => 'required|email|unique:users,email,' . $user->id,
+            'password'           => [
+                'nullable',
+                'string',
+                'min:8',
+                'regex:/[A-Z]/',
+                'regex:/[a-z]/',
+                'regex:/[0-9]/',
+                'regex:/[^A-Za-z0-9]/',
+            ],
+            'role_id'            => 'required|exists:roles,id',
+            'institucion_id'     => 'required|exists:instituciones,id',
         ]);
 
         $user->update([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'role_id'  => $request->role_id,
-            'password' => $request->password ? Hash::make($request->password) : $user->password,
+            'nombres'          => $request->nombres,
+            'apellido_paterno' => $request->apellido_paterno,
+            'apellido_materno' => $request->apellido_materno,
+            'email'            => $request->email,
+            'role_id'          => $request->role_id,
+            'institucion_id'   => $request->institucion_id,
+            'password'         => $request->password ? Hash::make($request->password) : $user->password,
         ]);
 
         return redirect()->route('admin.users.index')
