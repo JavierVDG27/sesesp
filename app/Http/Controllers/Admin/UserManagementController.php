@@ -116,4 +116,20 @@ class UserManagementController extends Controller
         return redirect()->route('admin.users.index')
             ->with('success', 'Usuario eliminado.');
     }
+    // HABILITAR / DESHABILITAR USUARIOS
+    public function toggleStatus(User $user)
+{
+    $user->activo = ! $user->activo;
+    $user->save();
+
+    return redirect()
+        ->route('admin.users.index')
+        ->with(
+            'success',
+            $user->activo
+                ? 'Usuario habilitado correctamente.'
+                : 'Usuario deshabilitado correctamente.'
+        );
+}
+
 }

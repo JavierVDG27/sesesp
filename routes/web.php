@@ -36,6 +36,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/users/{user}/edit', [UserManagementController::class, 'edit'])->name('admin.users.edit');
     Route::put('/admin/users/{user}', [UserManagementController::class, 'update'])->name('admin.users.update');
     Route::delete('/admin/users/{user}', [UserManagementController::class, 'destroy'])->name('admin.users.destroy');
+
+    //Habilitar / deshabilitar usuarios
+    Route::patch('/admin/users/{user}/toggle', [UserManagementController::class, 'toggleStatus'])->name('admin.users.toggle');
 });
 
 // RUTAS SOLO PARA DEPENDENCIAS

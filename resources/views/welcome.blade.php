@@ -22,16 +22,14 @@
         <div class="container mx-auto px-4 py-4">
             <div class="flex justify-between items-center">
                 <div class="flex items-center space-x-4">
-                    <img src="{{ asset('images/logo.jpg') }}" alt="SESESP" class="h-12">
+                    <img src="{{ asset('images/logo.jpg') }}" alt="SESESP" class="h-16">
                     <div>
                         <h1 class="text-xl font-bold text-[#691C32]">SESESP</h1>
                         <p class="text-sm text-gray-600">Sistema de Gestión de Expedientes</p>
                     </div>
                 </div>
-                <nav class="hidden md:flex space-x-6">
-                    <a href="#features" class="text-gray-700 hover:text-[#9F2241]">Características</a>
-                    <a href="#about" class="text-gray-700 hover:text-[#9F2241]">Acerca de</a>
-                    <a href="{{ route('login') }}" class="text-[#691C32] hover:text-[#9F2241] font-semibold">Iniciar Sesión</a>
+                <nav class="hidden md:flex space-x-4">
+                    <a href="{{ route('login') }}" class="text-[#691C32] hover:text-[#9F2241] font-semibold">INICIAR SESIÓN</a>
                 </nav>
                 <div class="md:hidden">
                     <!-- Menú móvil -->
@@ -40,10 +38,10 @@
         </div>
     </header>
 
-    <!-- HERO SECTION -->
+    <!-- Seccion principal -->
     <section class="hero-gradient text-white">
-        <div class="container mx-auto px-4 py-20">
-            <div class="max-w-4xl mx-auto text-center">
+        <div class="container mx-auto px-4 py-10">
+            <div class="max-w-7xl mx-auto text-center">
                 <h1 class="text-4xl md:text-5xl font-bold mb-6">
                     Gestión Eficiente de Expedientes
                 </h1>
@@ -51,17 +49,11 @@
                     Sistema especializado para la administración y control de expedientes 
                     en la Secretaría de Seguridad Pública
                 </p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a href="{{ route('login') }}" 
-                       class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-[#691C32] transition">
-                        Acceso al Sistema
-                    </a>
-                </div>
             </div>
         </div>
     </section>
 
-    <!-- FEATURES SECTION -->
+    <!-- Caracteristicas -->
     <section id="features" class="py-16 bg-white">
         <div class="container mx-auto px-4">
             <h2 class="text-3xl font-bold text-center text-[#691C32] mb-12">
@@ -69,7 +61,7 @@
             </h2>
             
             <div class="grid md:grid-cols-3 gap-8">
-                <!-- Feature 1 -->
+                <!-- Caracteristica 1 -->
                 <div class="feature-card bg-gray-50 p-6 rounded-lg shadow-md">
                     <div class="w-12 h-12 bg-[#9F2241] rounded-lg flex items-center justify-center mb-4">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +75,7 @@
                     </p>
                 </div>
 
-                <!-- Feature 2 -->
+                <!-- Caracteristica 2 -->
                 <div class="feature-card bg-gray-50 p-6 rounded-lg shadow-md">
                     <div class="w-12 h-12 bg-[#9F2241] rounded-lg flex items-center justify-center mb-4">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -97,7 +89,7 @@
                     </p>
                 </div>
 
-                <!-- Feature 3 -->
+                <!-- Caracteristica 3 -->
                 <div class="feature-card bg-gray-50 p-6 rounded-lg shadow-md">
                     <div class="w-12 h-12 bg-[#9F2241] rounded-lg flex items-center justify-center mb-4">
                         <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,7 +106,7 @@
         </div>
     </section>
 
-    <!-- ABOUT SECTION -->
+    <!-- seccion de iniciar sesion -->
     <section id="about" class="py-16 bg-gray-100">
         <div class="container mx-auto px-4">
             <div class="max-w-3xl mx-auto text-center">
@@ -142,14 +134,14 @@
         </div>
     </section>
 
-    <!-- FOOTER -->
+    <!-- Pie de pagina -->
     <footer class="bg-[#691C32] text-white py-8">
         <div class="container mx-auto px-4">
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <div class="flex items-center space-x-4 mb-4 md:mb-0">
-                    <img src="{{ asset('images/logo.jpg') }}" alt="SESESP" class="h-10">
+                    <img src="{{ asset('images/tecnologias-logo.png') }}" alt="SESESP" class="h-10">
                     <div>
-                        <p class="font-semibold">Secretaría de Seguridad Pública</p>
+                        <p class="font-semibold">SECRETARIADO EJECUTIVO DEL SISTEMA ESTATAL DE SEGURIDAD PÚBLICA</p>
                         <p class="text-sm text-gray-300">Sistema de Gestión de Expedientes</p>
                     </div>
                 </div>

@@ -18,6 +18,7 @@ protected $fillable = [
     'password',
     'role_id',
     'institucion_id',
+    'activo',
 ];
 
     protected $hidden = [
@@ -30,6 +31,7 @@ protected $fillable = [
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'activo' => 'boolean',
         ];
     }
 

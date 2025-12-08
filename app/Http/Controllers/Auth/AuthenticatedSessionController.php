@@ -29,7 +29,7 @@ public function store(LoginRequest $request)
         $request->authenticate();
     } catch (\Exception $e) {
         return back()->withErrors([
-            'email' => 'Las credenciales no son correctas.',
+            'email' => 'El correo electrónico o la contraseña son incorrectos.',
         ]);
     }
 
@@ -52,7 +52,13 @@ public function store(LoginRequest $request)
             'email' => 'Tu cuenta no tiene un rol asignado.',
         ]);
     }
-
+    // Cuenta deshabilitada
+    if (!$user->activo) {
+        Auth::logout();
+        return back()->withErrors([
+            'email' => 'Tu usuario se encuentra deshabilitado. Por favor comunícate con la institución para reactivarlo.',
+        ]);
+    }
     // Redirecciones según rol
     if ($user->role->name === 'admin') {
         return redirect()->route('admin.dashboard');
