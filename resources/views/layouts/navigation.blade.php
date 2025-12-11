@@ -1,7 +1,28 @@
 @php
-    $dashboardUrl = auth()->user()->role->name === 'admin'
-        ? route('admin.dashboard')
-        : route('dashboard');
+    $user = auth()->user();
+
+    // Ruta por defecto (por si algo falla)
+    $dashboardUrl = route('dashboard');
+
+    if ($user && $user->role) {
+        switch ($user->role->name) {
+            case 'admin':
+                $dashboardUrl = route('admin.dashboard');
+                break;
+            case 'capturista':
+                $dashboardUrl = route('capturista.dashboard');
+                break;
+            case 'dependencia':
+                $dashboardUrl = route('dependencia.dashboard');
+                break;
+            case 'validador':
+                $dashboardUrl = route('validador.dashboard');
+                break;
+            case 'lector':
+                $dashboardUrl = route('lector.dashboard');
+                break;
+        }
+    }
 @endphp
 
 <nav x-data="{ open: false }" class="bg-white border-b border-[#9F2241] font-[Montserrat]">
@@ -57,32 +78,31 @@
 
                     </button>
 
-                <!-- Dropdown -->
-                <div x-show="open"
-                    x-transition
-                    class="absolute z-50 mt-2 w-48 rounded-md shadow-lg end-0 bg-white">
+                    <!-- Dropdown -->
+                    <div x-show="open"
+                        x-transition
+                        class="absolute z-50 mt-2 w-48 rounded-md shadow-lg end-0 bg-white">
 
-                    <div class="rounded-md shadow-lg ring-1 ring-black ring-opacity-5 py-1 bg-[#9F2241]">
+                        <div class="rounded-md shadow-lg ring-1 ring-black ring-opacity-5 py-1 bg-[#9F2241]">
 
-                        {{-- Solo los administradores pueden ver "Perfil" --}}
-                        @if(Auth::user()->role->name === 'admin')
-                            <a href="{{ route('profile.edit') }}"
-                                class="block w-full px-4 py-2 text-sm text-white hover:bg-[#691C32]">
-                                Perfil
-                            </a>
-                        @endif
+                            {{-- Solo los administradores pueden ver "Perfil" --}}
+                            @if(Auth::user()->role->name === 'admin')
+                                <a href="{{ route('profile.edit') }}"
+                                    class="block w-full px-4 py-2 text-sm text-white hover:bg-[#691C32]">
+                                    Perfil
+                                </a>
+                            @endif
 
-                        <form method="POST" action="{{ route('logout') }}">
-                            @csrf
-                            <button
-                                class="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#691C32]">
-                                Cerrar sesión
-                            </button>
-                        </form>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button
+                                    class="w-full text-left px-4 py-2 text-sm text-white hover:bg-[#691C32]">
+                                    Cerrar sesión
+                                </button>
+                            </form>
 
+                        </div>
                     </div>
-                </div>
-
 
                 </div>
             </div>

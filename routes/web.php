@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Admin\UserManagementController;
+use App\Http\Controllers\ExpedienteController;
 
 
 // Página principal
@@ -67,6 +68,11 @@ Route::middleware(['auth', 'role:lector'])->group(function () {
     Route::get('/lector/dashboard', function () {
         return "Panel del Lector";
     })->name('lector.dashboard');
+});
+
+// Rutas para Expedientes
+Route::middleware(['auth', 'role:capturista'])->group(function () {
+    Route::resource('expedientes', ExpedienteController::class);
 });
 
 
