@@ -57,7 +57,7 @@ Route::middleware(['auth', 'role:capturista'])->group(function () {
 });
 
 // Rutas para VALIDADOR
-Route::middleware(['auth', 'role:validador'])->group(function () {
+ Route::middleware(['auth', 'role:validador'])->group(function () {
     Route::get('/validador/dashboard', function () {
         return view('validador.dashboard');
     })->name('validador.dashboard');
@@ -74,6 +74,40 @@ Route::middleware(['auth', 'role:lector'])->group(function () {
 Route::middleware(['auth', 'role:capturista'])->group(function () {
     Route::resource('expedientes', ExpedienteController::class);
 });
+
+
+// === NUEVAS RUTAS FLUJO DE ESTADOS ===
+
+// Rutas para Expedientes + flujo (CAPTURISTA)
+Route::middleware(['auth', 'role:capturista'])->group(function () {
+
+    // Solo las acciones que realmente usas
+    Route::resource('expedientes', ExpedienteController::class)
+        ->only(['index','create','store','edit','update','destroy']);
+
+    // Enviar a validación / reenviar
+    Route::post('/expedientes/{expediente}/enviar-validacion', [ExpedienteController::class, 'enviarValidacion'])
+        ->name('expedientes.enviar-validacion');
+
+    Route::post('/expedientes/{expediente}/reenviar-validacion', [ExpedienteController::class, 'reenviarValidacion'])
+        ->name('expedientes.reenviar-validacion');
+});
+
+// Validador (revisor): listar / ver / decidir
+Route::middleware(['auth', 'role:validador'])
+    ->prefix('validador')
+    ->name('validador.')
+    ->group(function () {
+
+        Route::get('/expedientes', [ExpedienteController::class, 'listaEnValidacion'])
+            ->name('expedientes.index');
+
+        Route::get('/expedientes/{expediente}', [ExpedienteController::class, 'mostrarParaRevision'])
+            ->name('expedientes.show');
+
+        Route::post('/expedientes/{expediente}/decidir', [ExpedienteController::class, 'decidir'])
+            ->name('expedientes.decidir');
+    });
 
 
 // Auth Breeze
