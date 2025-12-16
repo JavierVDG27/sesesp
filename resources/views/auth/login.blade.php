@@ -24,7 +24,7 @@
                     Secretariado Ejecutivo del Sistema Estatal de Seguridad Pública
                 </span>
                 <span class="text-sm md:text-base font-semibold">
-                    SISTEMA DE GESTIÓN DE EXPEDIENTES
+                    SISTEMA DE EXPEDIENTES TÉCNICOS
                 </span>
             </div>
         </div>
@@ -167,7 +167,7 @@
     {{-- FOOTER --}}
     <footer class="w-full bg-[#691C32] text-gray-100 text-xs py-3">
         <div class="max-w-7xl mx-auto px-6 text-center">
-            &copy; {{ date('Y') }} Sistema de Gestión de Expedientes. Todos los derechos reservados.
+            &copy; {{ date('Y') }} Sistema de Expedientes Técnicos. Todos los derechos reservados.
         </div>
     </footer>
 
@@ -183,8 +183,8 @@
                 Recuperación de contraseña
             </h3>
             <p class="text-sm text-center text-gray-700 mb-4">
-                Para restablecer tu contraseña, por favor comunícate con la institución
-                o con el administrador del sistema.  
+                Para restablecer tu contraseña, por favor comunícate
+                con el ADMINISTRADOR del sistema.  
             </p>
             <p class="text-sm text-center text-gray-700 mb-4">
                 El restablecimiento de contraseñas solo puede realizarse por personal autorizado.

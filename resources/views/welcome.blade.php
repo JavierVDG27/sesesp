@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión de Expedientes - SESESP</title>
+    <title>Sistema de Expedientes Técnicos - SESESP</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
         .hero-gradient {
@@ -25,7 +25,7 @@
                     <img src="{{ asset('images/logo.jpg') }}" alt="SESESP" class="h-16">
                     <div>
                         <h1 class="text-xl font-bold text-[#691C32]">SESESP</h1>
-                        <p class="text-sm text-gray-600">Sistema de Gestión de Expedientes</p>
+                        <p class="text-sm text-gray-600">Sistema de Expedientes Técnicos</p>
                     </div>
                 </div>
                 <nav class="hidden md:flex space-x-4">
@@ -43,11 +43,11 @@
         <div class="container mx-auto px-4 py-10">
             <div class="max-w-7xl mx-auto text-center">
                 <h1 class="text-4xl md:text-5xl font-bold mb-6">
-                    Gestión Eficiente de Expedientes
+                    Gestión Eficiente de Expedientes Técnicos
                 </h1>
                 <p class="text-xl mb-8 text-gray-100">
                     Sistema especializado para la administración y control de expedientes 
-                    en la Secretaría de Seguridad Pública
+                    en SESESP
                 </p>
             </div>
         </div>
@@ -111,12 +111,12 @@
         <div class="container mx-auto px-4">
             <div class="max-w-3xl mx-auto text-center">
                 <h2 class="text-3xl font-bold text-[#691C32] mb-6">
-                    Sistema Oficial SESESP
+                    Sistema Expedientes Técnicos SESESP
                 </h2>
                 <p class="text-lg text-gray-700 mb-8">
-                    Plataforma desarrollada para optimizar los procesos administrativos 
-                    y mejorar la eficiencia en el manejo de expedientes dentro de la 
-                    Secretaría de Seguridad Pública.
+                    Sistema desarrollado para optimizar los procesos administrativos 
+                    y mejorar la eficiencia en el manejo de Expedientes Técnicos dentro del 
+                    Secretariado Ejecutivo del Sistema Estatal de Seguridad Pública.
                 </p>
                 <div class="bg-white p-6 rounded-lg shadow-md">
                     <h3 class="text-xl font-semibold text-[#691C32] mb-4">
@@ -142,12 +142,12 @@
                     <img src="{{ asset('images/tecnologias-logo.png') }}" alt="SESESP" class="h-10">
                     <div>
                         <p class="font-semibold">SECRETARIADO EJECUTIVO DEL SISTEMA ESTATAL DE SEGURIDAD PÚBLICA</p>
-                        <p class="text-sm text-gray-300">Sistema de Gestión de Expedientes</p>
+                        <p class="text-sm text-gray-300">Sistema de Expedientes Técnicos</p>
                     </div>
                 </div>
                 <div class="text-center md:text-right">
                     <p class="text-gray-300">&copy; {{ date('Y') }} SESESP. Todos los derechos reservados.</p>
-                    <p class="text-sm text-gray-400">Plataforma oficial para uso institucional</p>
+                    <p class="text-sm text-gray-400">Plataforma para uso institucional</p>
                 </div>
             </div>
         </div>
