@@ -18,6 +18,7 @@ protected $fillable = [
     'password',
     'role_id',
     'institucion_id',
+    'subdependencia_id',
     'activo',
 ];
 
@@ -43,6 +44,11 @@ protected $fillable = [
     public function institucion()
     {
         return $this->belongsTo(Institucion::class, 'institucion_id');
+    }
+
+    public function subdependencia()
+    {
+        return $this->belongsTo(Subdependencia::class, 'subdependencia_id');
     }
 
 }

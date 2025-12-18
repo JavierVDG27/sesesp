@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\Institucion;
+use App\Models\Subdependencia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -15,7 +16,7 @@ class UserManagementController extends Controller
     public function index()
     {
         return view('admin.users.index', [
-            'users' => User::with(['role','institucion'])->paginate(10)
+            'users' => User::with(['role','institucion','subdependencia'])->paginate(10)
         ]);
     }
 
@@ -24,7 +25,8 @@ class UserManagementController extends Controller
     {
         return view('admin.users.create', [
             'roles' => Role::all(),
-            'instituciones' => Institucion::all()
+            'instituciones' => Institucion::all(),
+            'subdependencias' => Subdependencia::with('institucion')->orderBy('nombre')->get(),
         ]);
     }
 
@@ -47,6 +49,7 @@ class UserManagementController extends Controller
             ],
             'role_id'            => 'required|exists:roles,id',
             'institucion_id'     => 'required|exists:instituciones,id',
+            'subdependencia_id' => 'nullable|exists:subdependencias,id',
         ]);
 
         User::create([
@@ -57,6 +60,7 @@ class UserManagementController extends Controller
             'password'         => Hash::make($request->password),
             'role_id'          => $request->role_id,
             'institucion_id'   => $request->institucion_id,
+            'subdependencia_id' => $request->subdependencia_id,
         ]);
 
         return redirect()->route('admin.users.index')
@@ -69,7 +73,8 @@ class UserManagementController extends Controller
         return view('admin.users.edit', [
             'user'          => $user,
             'roles'         => Role::all(),
-            'instituciones' => Institucion::all()
+            'instituciones' => Institucion::all(),
+            'subdependencias' => Subdependencia::with('institucion')->orderBy('nombre')->get(),
         ]);
     }
 
@@ -92,6 +97,7 @@ class UserManagementController extends Controller
             ],
             'role_id'            => 'required|exists:roles,id',
             'institucion_id'     => 'required|exists:instituciones,id',
+            'subdependencia_id' => 'nullable|exists:subdependencias,id',
         ]);
 
         $user->update([
@@ -101,6 +107,7 @@ class UserManagementController extends Controller
             'email'            => $request->email,
             'role_id'          => $request->role_id,
             'institucion_id'   => $request->institucion_id,
+            'subdependencia_id'=> $request->subdependencia_id,
             'password'         => $request->password ? Hash::make($request->password) : $user->password,
         ]);
 

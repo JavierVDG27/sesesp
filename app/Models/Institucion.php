@@ -8,10 +8,17 @@ class Institucion extends Model
 {
     protected $table = 'instituciones';
 
-    protected $fillable = ['nombre', 'siglas'];
+    protected $fillable = ['nombre', 'siglas', 'orden'];
+
+    public function subdependencias()
+    {
+        return $this->hasMany(\App\Models\Subdependencia::class)
+            ->orderBy('orden');   // <-- aquí
+    }
 
     public function users()
     {
-        return $this->hasMany(User::class);
+        return $this->hasMany(User::class, 'institucion_id');
     }
+
 }

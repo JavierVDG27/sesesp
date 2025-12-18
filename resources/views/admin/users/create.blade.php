@@ -1,4 +1,5 @@
 {{-- resources/views/admin/users/create.blade.php --}}
+
 <x-app-layout>
 
     <x-slot name="header">
@@ -111,29 +112,83 @@
                             <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                         @enderror
                     </div>
-                    {{-- Institución --}}
-                    <div class="mb-6">
-                        <label for="institucion_id" class="block font-medium text-sm text-gray-700">
-                            Institución
-                        </label>
 
-                        <select name="institucion_id" id="institucion_id"
-                            class="mt-1 block w-full rounded-lg border-gray-300"
-                            required>
+                    {{-- Institución + Subdependencia --}}
+                    @php
+                        // Mapa: institucion_id => [ {id, nombre}, ... ]
+                        $subdepsByInst = $subdependencias
+                            ->groupBy('institucion_id')
+                            ->map(fn($items) => $items->map(fn($s) => ['id' => $s->id, 'nombre' => $s->nombre])->values())
+                            ->toArray();
+                    @endphp
 
-                            <option value="" disabled selected>Seleccione una institución</option>
+                    <div
+                        x-data="{
+                            institucionId: '{{ old('institucion_id') }}',
+                            subdependenciaId: '{{ old('subdependencia_id') }}',
+                            subdepsByInst: @js($subdepsByInst),
+                            get subdeps() {
+                                return this.subdepsByInst[this.institucionId] ?? [];
+                            }
+                        }"
+                        class="space-y-6"
+                    >
+                        {{-- Institución --}}
+                        <div>
+                            <label for="institucion_id" class="block font-medium text-sm text-gray-700">
+                                Institución
+                            </label>
 
-                            @foreach($instituciones as $inst)
-                                <option value="{{ $inst->id }}">
-                                    {{ $inst->nombre }}
-                                </option>
-                            @endforeach
+                            <select
+                                name="institucion_id"
+                                id="institucion_id"
+                                class="mt-1 block w-full rounded-lg border-gray-300"
+                                required
+                                x-model="institucionId"
+                                @change="subdependenciaId = ''"
+                            >
+                                <option value="" disabled selected>Seleccione una institución</option>
 
-                        </select>
+                                @foreach($instituciones as $inst)
+                                    <option value="{{ $inst->id }}">
+                                        {{ $inst->siglas ? ($inst->siglas.' - '.$inst->nombre) : $inst->nombre }}
+                                    </option>
+                                @endforeach
+                            </select>
 
-                        @error('institucion_id')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
+                            @error('institucion_id')
+                                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        {{-- Subdependencia --}}
+                        <div>
+                            <label for="subdependencia_id" class="block font-medium text-sm text-gray-700">
+                                Subdependencia (opcional)
+                            </label>
+
+                            <select
+                                name="subdependencia_id"
+                                id="subdependencia_id"
+                                class="mt-1 block w-full rounded-lg border-gray-300"
+                                x-model="subdependenciaId"
+                                :disabled="!institucionId || subdeps.length === 0"
+                            >
+                                <option value="">Sin subdependencia</option>
+
+                                <template x-for="s in subdeps" :key="s.id">
+                                    <option :value="s.id" x-text="s.nombre"></option>
+                                </template>
+                            </select>
+
+                            <p class="text-gray-500 text-sm mt-1">
+                                Selecciona primero una institución para ver sus subdependencias.
+                            </p>
+
+                            @error('subdependencia_id')
+                                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
 
                     {{-- Botón --}}
@@ -145,6 +200,10 @@
                     </div>
 
                 </form>
+                <a href="{{ route('admin.users.index') }}"
+                class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                    ← Regresar a Lista de Usuarios
+                </a>
 
             </div>
         </div>

@@ -30,8 +30,8 @@
                 </a>
 
                 {{-- Dependencias --}}
-                <a href="#"
-                   class="block px-6 py-3 hover:bg-[#9F2241]/40 transition">
+                <a href="{{ route('admin.dependencias.index') }}"
+                class="block px-6 py-3 hover:bg-[#9F2241]/40 transition">
                     🏢 Dependencias
                 </a>
 
