@@ -102,7 +102,84 @@
                     </div>
 
                 </div>
+                    @php
+                    $year = $year ?? now()->year;
+                    $rows = $rows ?? collect();
+                    @endphp
 
+                {{-- Debajo de las tarjetas --}}
+                    <div class="mt-10">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-xl font-bold text-[#691C32]">FASP {{ $year }} (Vista/Edición)</h2>
+
+                        <form method="GET" class="flex gap-2">
+                        <input name="year" value="{{ $year }}" class="border rounded-lg px-3 py-2 w-28" />
+                        <button class="bg-[#691C32] text-white px-4 py-2 rounded-lg">Ver</button>
+                        </form>
+                    </div>
+
+                    <div class="overflow-x-auto bg-white rounded-2xl shadow border">
+                        <table class="min-w-full text-sm">
+                        <thead class="bg-gray-100 text-gray-700">
+                            <tr>
+                            <th class="p-2 text-left">Nivel</th>
+                            <th class="p-2 text-left">Código</th>
+                            <th class="p-2 text-left">Nombre</th>
+
+                            <th class="p-2 text-right">Fed</th>
+                            <th class="p-2 text-right">Mun</th>
+                            <th class="p-2 text-right">Subt Fed</th>
+
+                            <th class="p-2 text-right">Est</th>
+                            <th class="p-2 text-right">Mun</th>
+                            <th class="p-2 text-right">Subt Est</th>
+
+                            <th class="p-2 text-right">Total</th>
+
+                            <th class="p-2 text-left">Unidad</th>
+                            <th class="p-2 text-right">Cantidad</th>
+                            <th class="p-2 text-left">RLCF</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach($rows as $r)
+                            @php
+                                $indent = ($r->nivel - 1) * 16;
+                                $codigo = collect([$r->eje,$r->programa,$r->subprograma,$r->capitulo,$r->concepto,$r->partida_generica,$r->bien])
+                                        ->filter()->implode('.');
+                            @endphp
+                            <tr class="border-t {{ $r->tiene_diferencia ? 'bg-yellow-50' : '' }}">
+                                <td class="p-2">{{ $r->nivel }}</td>
+
+                                <td class="p-2">{{ $codigo }}</td>
+
+                                <td class="p-2" style="padding-left: {{ $indent }}px;">
+                                {{ $r->nombre }}
+                                @if($r->tiene_diferencia)
+                                    <span class="ml-2 text-xs text-yellow-700 font-semibold">DIF</span>
+                                @endif
+                                </td>
+
+                                <td class="p-2 text-right">{{ number_format($r->fed_federal,2) }}</td>
+                                <td class="p-2 text-right">{{ number_format($r->fed_municipal,2) }}</td>
+                                <td class="p-2 text-right font-semibold">{{ number_format($r->fed_subtotal,2) }}</td>
+
+                                <td class="p-2 text-right">{{ number_format($r->est_estatal,2) }}</td>
+                                <td class="p-2 text-right">{{ number_format($r->est_municipal,2) }}</td>
+                                <td class="p-2 text-right font-semibold">{{ number_format($r->est_subtotal,2) }}</td>
+
+                                <td class="p-2 text-right font-bold">{{ number_format($r->fin_total,2) }}</td>
+
+                                <td class="p-2">{{ $r->unidad_medida }}</td>
+                                <td class="p-2 text-right">{{ $r->cantidad }}</td>
+                                <td class="p-2">{{ $r->rlcf }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                        </table>
+                    </div>
+                    </div>
             </div>
 
         </main>

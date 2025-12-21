@@ -13,7 +13,7 @@ class Institucion extends Model
     public function subdependencias()
     {
         return $this->hasMany(\App\Models\Subdependencia::class)
-            ->orderBy('orden');   // <-- aquí
+            ->orderBy('orden'); 
     }
 
     public function users()

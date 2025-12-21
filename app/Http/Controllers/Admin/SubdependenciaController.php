@@ -10,34 +10,28 @@ use Illuminate\Support\Facades\DB;
 
 class SubdependenciaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $subdependencias = Subdependencia::query()
+        $institucionId = $request->integer('institucion_id');
+
+        $instituciones = \App\Models\Institucion::orderBy('orden')->orderBy('nombre')->get();
+
+        $q = Subdependencia::query()
             ->with('institucion')
-            ->select('subdependencias.*')
-            ->selectSub(function ($q) {
-                $q->from('subdependencias as s2')
-                    ->select('s2.id')
-                    ->whereColumn('s2.institucion_id', 'subdependencias.institucion_id')
-                    ->whereColumn('s2.orden', '<', 'subdependencias.orden')
-                    ->orderBy('s2.orden', 'desc')
-                    ->limit(1);
-            }, 'prev_id')
-            ->selectSub(function ($q) {
-                $q->from('subdependencias as s2')
-                    ->select('s2.id')
-                    ->whereColumn('s2.institucion_id', 'subdependencias.institucion_id')
-                    ->whereColumn('s2.orden', '>', 'subdependencias.orden')
-                    ->orderBy('s2.orden', 'asc')
-                    ->limit(1);
-            }, 'next_id')
-            ->orderBy('institucion_id')
-            ->orderBy('orden')
-            ->paginate(10);
+            ->orderBy('orden');
 
-        return view('admin.subdependencias.index', compact('subdependencias'));
+        if ($institucionId) {
+            $q->where('institucion_id', $institucionId);
+        } else {
+            $q->orderBy('institucion_id');
+        }
+
+        $subdependencias = $institucionId
+            ? $q->get()
+            : $q->paginate(10);
+
+        return view('admin.subdependencias.index', compact('subdependencias', 'instituciones', 'institucionId'));
     }
-
 
     public function create()
     {
@@ -51,7 +45,7 @@ class SubdependenciaController extends Controller
         $request->validate([
             'institucion_id' => 'required|exists:instituciones,id',
             'nombre' => 'required|string|max:255',
-            'siglas' => 'nullable|string|max:50',
+            //'siglas' => 'nullable|string|max:50',
         ]);
 
         $institucionId = (int) $request->institucion_id;
@@ -62,7 +56,7 @@ class SubdependenciaController extends Controller
         Subdependencia::create([
             'institucion_id' => $institucionId,
             'nombre' => $request->nombre,
-            'siglas' => $request->siglas,
+            //'siglas' => $request->siglas,
             'orden' => $orden,
         ]);
 
@@ -83,18 +77,16 @@ class SubdependenciaController extends Controller
         $request->validate([
             'institucion_id' => 'required|exists:instituciones,id',
             'nombre' => 'required|string|max:255',
-            'siglas' => 'nullable|string|max:50',
+            //'siglas' => 'nullable|string|max:50',
         ]);
 
         DB::transaction(function () use ($request, $subdependencia) {
             $oldInstitucion = $subdependencia->institucion_id;
             $newInstitucion = (int) $request->institucion_id;
 
-            // si cambia de institución: lo “saco” del orden anterior y lo agrego al final del nuevo
             if ($oldInstitucion !== $newInstitucion) {
                 $oldOrden = $subdependencia->orden;
 
-                // compactar los que estaban abajo en la institución vieja
                 Subdependencia::where('institucion_id', $oldInstitucion)
                     ->where('orden', '>', $oldOrden)
                     ->decrement('orden');
@@ -105,7 +97,7 @@ class SubdependenciaController extends Controller
             }
 
             $subdependencia->nombre = $request->nombre;
-            $subdependencia->siglas = $request->siglas;
+            //$subdependencia->siglas = $request->siglas;
             $subdependencia->save();
         });
 
@@ -121,7 +113,6 @@ class SubdependenciaController extends Controller
 
             $subdependencia->delete();
 
-            // compactar orden en esa institución
             Subdependencia::where('institucion_id', $inst)
                 ->where('orden', '>', $ord)
                 ->decrement('orden');
@@ -148,7 +139,6 @@ class SubdependenciaController extends Controller
             $currentOrden = $subdependencia->orden;
             $prevOrden    = $prev->orden;
 
-            // usar valor temporal que no choque (0 funciona si orden empieza en 1)
             $subdependencia->orden = 0;
             $subdependencia->save();
 
@@ -176,7 +166,6 @@ class SubdependenciaController extends Controller
             $currentOrden = $subdependencia->orden;
             $nextOrden    = $next->orden;
 
-            // valor temporal
             $subdependencia->orden = 0;
             $subdependencia->save();
 
@@ -189,4 +178,46 @@ class SubdependenciaController extends Controller
 
         return back()->with('success', 'Orden actualizado.');
     }
+
+    public function updateOrdenBatch(Request $request)
+    {
+        $data = $request->validate([
+            'institucion_id' => ['required','integer','exists:instituciones,id'],
+            'items' => ['required','array','min:1'],
+            'items.*.id' => ['required','integer','exists:subdependencias,id'],
+            'items.*.orden' => ['required','integer','min:1','max:9999'],
+        ]);
+
+        $instId = (int) $data['institucion_id'];
+
+        DB::transaction(function () use ($data, $instId) {
+
+            // asegurar que todos pertenezcan a esa institución
+            $ids = collect($data['items'])->pluck('id')->values()->all();
+
+            $count = Subdependencia::whereIn('id', $ids)
+                ->where('institucion_id', $instId)
+                ->lockForUpdate()
+                ->count();
+
+            if ($count !== count($ids)) {
+                abort(422, 'Hay subdependencias que no pertenecen a la institución seleccionada.');
+            }
+
+            // temporales POSITIVOS (orden es unsigned) para evitar choque con unique(institucion_id, orden)
+            $max = (int) Subdependencia::where('institucion_id', $instId)->max('orden');
+            $tempBase = $max + 1000;
+
+            foreach ($ids as $i => $id) {
+                DB::table('subdependencias')->where('id', $id)->update(['orden' => $tempBase + $i]);
+            }
+
+            foreach ($data['items'] as $row) {
+                DB::table('subdependencias')->where('id', $row['id'])->update(['orden' => (int) $row['orden']]);
+            }
+        });
+
+        return back()->with('success', 'Orden de subdependencias guardado correctamente.');
+    }
+
 }

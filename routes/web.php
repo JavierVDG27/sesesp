@@ -85,6 +85,12 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::patch('/admin/instituciones/{institucione}/orden', [InstitucionController::class, 'updateOrden'])
         ->name('admin.instituciones.orden');
 
+    // orden dependencias
+    Route::post('/admin/instituciones/orden/batch', [InstitucionController::class, 'updateOrdenBatch'])
+        ->name('admin.instituciones.orden.batch');
+    Route::post('/admin/subdependencias/orden/batch', [SubdependenciaController::class, 'updateOrdenBatch'])
+      ->name('admin.subdependencias.orden.batch');
+
 });
 
 // RUTAS SOLO PARA DEPENDENCIAS

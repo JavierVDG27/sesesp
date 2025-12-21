@@ -207,7 +207,7 @@
                                 class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
                                     Regresar a Lista de Usuarios
                                 </a>
-                            <a href="{{ route('admin.users.index') }}"
+                            <a href="{{ route('admin.dashboard') }}"
                                class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
                                 Cancelar
                             </a>

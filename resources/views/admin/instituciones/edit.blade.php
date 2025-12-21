@@ -31,28 +31,6 @@
                         @error('siglas') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
                     </div>
 
-                    @php
-                        // Bag único para esta pantalla (solo 1 institución)
-                        $bag = 'edit_institucion_'.$institucion->id;
-
-                        $ordenValue = $errors->hasBag($bag)
-                            ? old('orden', $institucion->orden ?? 0)
-                            : ($institucion->orden ?? 0);
-                    @endphp
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700">Orden</label>
-                        <input type="number" name="orden"
-                            value="{{ $ordenValue }}"
-                            min="0" max="9999"
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-[#9F2241] focus:ring-[#9F2241]">
-                        <p class="text-xs text-gray-500 mt-1">Menor número = aparece primero.</p>
-
-                        @error('orden', $bag)
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
                     <div class="flex items-center justify-end gap-2 pt-2">
                         <a href="{{ route('admin.instituciones.index') }}"
                            class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition">
