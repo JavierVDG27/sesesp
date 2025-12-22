@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\DependenciasDashboardController;
 use App\Http\Controllers\Admin\InstitucionController;
 use App\Http\Controllers\Admin\SubdependenciaController;
 
+use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\FaspCatalogoController;
 
 // Página principal
 Route::get('/', function () {
@@ -35,63 +37,57 @@ Route::middleware('auth')->group(function () {
 });
 
 // RUTAS SOLO PARA ADMINISTRADOR
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'role:admin'])
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
 
-    Route::get('/admin/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        // CRUD de Usuarios
+        Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [UserManagementController::class, 'create'])->name('users.create');
+        Route::post('/users', [UserManagementController::class, 'store'])->name('users.store');
+        Route::get('/users/{user}/edit', [UserManagementController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [UserManagementController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
+        // Habilitar / deshabilitar usuarios
+        Route::patch('/users/{user}/toggle', [UserManagementController::class, 'toggleStatus'])->name('users.toggle');
+        // Vista de usuarios por dependencia
+        Route::get('/dependencias', [DependenciasDashboardController::class, 'index'])->name('dependencias.index');
+        // CRUD Dependencias (instituciones)
+        Route::resource('/instituciones', InstitucionController::class)
+            ->parameters(['instituciones' => 'institucion'])
+            ->names('instituciones');
+        // CRUD Subdependencias
+        Route::resource('/subdependencias', SubdependenciaController::class)
+            ->names('subdependencias');
+        // ordenar de arriba a abajo subdependencias
+        Route::patch('/subdependencias/{subdependencia}/up', [SubdependenciaController::class, 'moveUp'])->name('subdependencias.up');
+        Route::patch('/subdependencias/{subdependencia}/down', [SubdependenciaController::class, 'moveDown'])->name('subdependencias.down');
+        //Asignar - quitar dependencia a usuarios
+        Route::post('/dependencias/asignar', [DependenciasDashboardController::class, 'asignar'])->name('dependencias.asignar');
+        Route::post('/dependencias/quitar', [DependenciasDashboardController::class, 'quitar'])->name('dependencias.quitar');
+        // orden dependencias / Subdependencias
+        Route::patch('/instituciones/{institucione}/orden', [InstitucionController::class, 'updateOrden'])->name('instituciones.orden');
+        Route::post('/instituciones/orden/batch', [InstitucionController::class, 'updateOrdenBatch'])->name('instituciones.orden.batch');
+        Route::post('/subdependencias/orden/batch', [SubdependenciaController::class, 'updateOrdenBatch'])->name('subdependencias.orden.batch');
 
-    // CRUD de usuarios
-    Route::get('/admin/users', [UserManagementController::class, 'index'])->name('admin.users.index');
-    Route::get('/admin/users/create', [UserManagementController::class, 'create'])->name('admin.users.create');
-    Route::post('/admin/users', [UserManagementController::class, 'store'])->name('admin.users.store');
-    Route::get('/admin/users/{user}/edit', [UserManagementController::class, 'edit'])->name('admin.users.edit');
-    Route::put('/admin/users/{user}', [UserManagementController::class, 'update'])->name('admin.users.update');
-    Route::delete('/admin/users/{user}', [UserManagementController::class, 'destroy'])->name('admin.users.destroy');
+        // CATALOGO EXCEL
+        Route::get('/catalogo-fasp', [FaspCatalogoController::class, 'index'])
+        ->name('fasp.index');
 
-    // Habilitar / deshabilitar usuarios
-    Route::patch('/admin/users/{user}/toggle', [UserManagementController::class, 'toggleStatus'])
-        ->name('admin.users.toggle');
+        Route::post('/catalogo-fasp/import', [FaspCatalogoController::class, 'import'])
+        ->name('fasp.import');
 
-    // Vista de usuarios por dependencia
-    Route::get('/admin/dependencias', [DependenciasDashboardController::class, 'index'])
-        ->name('admin.dependencias.index');
+        Route::delete('/catalogo-fasp', [FaspCatalogoController::class, 'destroyByYear'])
+        ->name('fasp.destroy');
 
-    // CRUD Dependencias (instituciones)
-    Route::resource('/admin/instituciones', InstitucionController::class)
-        ->parameters(['instituciones' => 'institucion'])
-        ->names('admin.instituciones');
+        Route::patch('/catalogo-fasp/{row}', [FaspCatalogoController::class, 'update'])
+        ->name('fasp.update');
 
-    // CRUD Subdependencias
-    Route::resource('/admin/subdependencias', SubdependenciaController::class)
-        ->names('admin.subdependencias');
-
-    // ordenar de arriba a abajo subdependencias
-    Route::patch('/admin/subdependencias/{subdependencia}/up', [SubdependenciaController::class, 'moveUp'])
-        ->name('admin.subdependencias.up');
-
-    Route::patch('/admin/subdependencias/{subdependencia}/down', [SubdependenciaController::class, 'moveDown'])
-        ->name('admin.subdependencias.down');
-
-
-    //Asignar - quitar subdependencia a usuarios
-    Route::post('/admin/dependencias/asignar', [DependenciasDashboardController::class, 'asignar'])
-        ->name('admin.dependencias.asignar');
-
-    Route::post('/admin/dependencias/quitar', [DependenciasDashboardController::class, 'quitar'])
-        ->name('admin.dependencias.quitar');
-
-    // Guardar Orden dependencias
-    Route::patch('/admin/instituciones/{institucione}/orden', [InstitucionController::class, 'updateOrden'])
-        ->name('admin.instituciones.orden');
-
-    // orden dependencias
-    Route::post('/admin/instituciones/orden/batch', [InstitucionController::class, 'updateOrdenBatch'])
-        ->name('admin.instituciones.orden.batch');
-    Route::post('/admin/subdependencias/orden/batch', [SubdependenciaController::class, 'updateOrdenBatch'])
-      ->name('admin.subdependencias.orden.batch');
-
-});
+        Route::post('/catalogo-fasp/recalcular', [FaspCatalogoController::class, 'recalcular'])
+        ->name('fasp.recalcular');
+    });
 
 // RUTAS SOLO PARA DEPENDENCIAS
 Route::middleware(['auth', 'role:dependencia'])->group(function () {

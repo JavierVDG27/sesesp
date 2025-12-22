@@ -1,50 +1,23 @@
-@php
-    $user = auth()->user();
-
-    // Ruta por defecto (por si algo falla)
-    $dashboardUrl = route('dashboard');
-
-    if ($user && $user->role) {
-        switch ($user->role->name) {
-            case 'admin':
-                $dashboardUrl = route('admin.dashboard');
-                break;
-            case 'capturista':
-                $dashboardUrl = route('capturista.dashboard');
-                break;
-            case 'dependencia':
-                $dashboardUrl = route('dependencia.dashboard');
-                break;
-            case 'validador':
-                $dashboardUrl = route('validador.dashboard');
-                break;
-            case 'lector':
-                $dashboardUrl = route('lector.dashboard');
-                break;
-        }
-    }
-@endphp
-
 <nav x-data="{ open: false }" class="bg-white border-b border-[#9F2241] font-[Montserrat]">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <div class="flex justify-between h-16">
 
             <!-- Left side -->
             <div class="flex items-center space-x-4">
 
                 <!-- Logo -->
-                <a href="{{ $dashboardUrl }}" class="flex items-center space-x-2">
+                <a href="{{ dashboard_route() }}" class="flex items-center space-x-2">
                     <img src="{{ asset('images/logo.jpg') }}" alt="Logo" class="h-14 w-auto">
                 </a>
 
                 <!-- Dashboard Link -->
                 <div class="hidden sm:flex sm:space-x-8 sm:ms-10">
                     <a 
-                        href="{{ $dashboardUrl }}"
+                        href="{{ dashboard_route() }}"
                         class="inline-flex items-center px-1 pt-1 text-lg font-semibold tracking-wide text-black
-                            hover:text-[#9F2241] border-b-2 border-transparent hover:border-[#9F2241]
-                            transition duration-150 ease-in-out"
+                               hover:text-[#9F2241] border-b-2 border-transparent hover:border-[#9F2241]
+                               transition"
                     >
                         Dashboard
                     </a>
