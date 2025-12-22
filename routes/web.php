@@ -79,8 +79,16 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/catalogo-fasp/import', [FaspCatalogoController::class, 'import'])
         ->name('fasp.import');
 
+        Route::post('/catalogo-fasp', [FaspCatalogoController::class, 'store'])
+        ->name('fasp.store');
+
+        // borrar TODO el catálogo por año
         Route::delete('/catalogo-fasp', [FaspCatalogoController::class, 'destroyByYear'])
-        ->name('fasp.destroy');
+        ->name('fasp.destroyByYear');
+
+        // borrar SOLO un registro
+        Route::delete('/catalogo-fasp/{row}', [FaspCatalogoController::class, 'destroy'])
+        ->name('fasp.destroyRow');
 
         Route::patch('/catalogo-fasp/{row}', [FaspCatalogoController::class, 'update'])
         ->name('fasp.update');
