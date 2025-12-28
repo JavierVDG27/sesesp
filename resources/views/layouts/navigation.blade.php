@@ -57,15 +57,6 @@
                         class="absolute z-50 mt-2 w-48 rounded-md shadow-lg end-0 bg-white">
 
                         <div class="rounded-md shadow-lg ring-1 ring-black ring-opacity-5 py-1 bg-[#9F2241]">
-
-                            {{-- Solo los administradores pueden ver "Perfil" --}}
-                            @if(Auth::user()->role->name === 'admin')
-                                <a href="{{ route('profile.edit') }}"
-                                    class="block w-full px-4 py-2 text-sm text-white hover:bg-[#691C32]">
-                                    Perfil
-                                </a>
-                            @endif
-
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
                                 <button

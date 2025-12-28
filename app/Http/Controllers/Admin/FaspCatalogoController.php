@@ -10,6 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
+use App\Models\FaspAsignacion;
+use App\Models\FaspAsignacionInstitucion;
+
 
 class FaspCatalogoController extends Controller
 {
@@ -153,17 +156,29 @@ class FaspCatalogoController extends Controller
 
         DB::transaction(function () use ($request, $year, $entidad, $tree, $rollup) {
 
+            // ✅ Desactivar asignaciones relacionadas (para que NO "revivan" al reimportar)
+            FaspAsignacionInstitucion::where('year', $year)
+                ->where('entidad', $entidad)
+                ->update(['active' => false]);
+
+            FaspAsignacion::where('year', $year)
+                ->where('entidad', $entidad)
+                ->update(['active' => false]);
+
+            // borrar catálogo
             FaspCatalogo::where('year', $year)->where('entidad', $entidad)->delete();
 
+            // importar
             Excel::import(new \App\Imports\FaspCatalogoImportSheets($year), $request->file('archivo'));
 
+            // reconstruir y recalcular
             $tree->rebuildParents($year, $entidad);
             $rollup->recalcularYearEntidad($year, $entidad);
         });
 
         return redirect()
             ->route('admin.fasp.index', ['year' => $year])
-            ->with('success', 'Catálogo FASP importado correctamente.');
+            ->with('success', 'Catálogo FASP importado correctamente. (Asignaciones previas desactivadas)');
     }
 
     public function destroyByYear(Request $request)
@@ -175,12 +190,28 @@ class FaspCatalogoController extends Controller
         $year = (int) $request->year;
         $entidad = '8300';
 
-        FaspCatalogo::where('year', $year)->where('entidad', $entidad)->delete();
+        DB::transaction(function () use ($year, $entidad) {
+
+            // ✅ Desactivar asignaciones del año/entidad
+            FaspAsignacionInstitucion::where('year', $year)
+                ->where('entidad', $entidad)
+                ->update(['active' => false]);
+
+            FaspAsignacion::where('year', $year)
+                ->where('entidad', $entidad)
+                ->update(['active' => false]);
+
+            // Borrar catálogo
+            FaspCatalogo::where('year', $year)
+                ->where('entidad', $entidad)
+                ->delete();
+        });
 
         return redirect()
             ->route('admin.fasp.index', ['year' => $year])
-            ->with('success', "Catálogo FASP del año {$year} eliminado. Ya puedes cargar uno nuevo.");
+            ->with('success', "Catálogo FASP del año {$year} eliminado. Asignaciones desactivadas para ese año.");
     }
+
 
 
     public function store(Request $request, FaspTreeService $tree, FaspRollupService $rollup)

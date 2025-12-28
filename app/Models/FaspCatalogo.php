@@ -39,4 +39,5 @@ class FaspCatalogo extends Model
       abs($this->est_estatal - $this->calc_est_estatal) > $eps ||
       abs($this->est_municipal - $this->calc_est_municipal) > $eps;
   }
+
 }

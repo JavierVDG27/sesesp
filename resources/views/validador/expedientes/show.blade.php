@@ -40,6 +40,26 @@
                     </span>
                 </div>
 
+                {{-- Validación de asignación FASP (por institución del capturista) --}}
+                @if(isset($coincideAsignacion) && !$coincideAsignacion)
+                        <div class="mb-6 px-4 py-3 rounded-lg bg-red-100 text-red-800 border border-red-200">
+                            <div class="font-semibold">⚠️ Advertencia: fuera de asignación</div>
+                            <div class="text-sm mt-1">
+                                {{ $motivoNoCoincide ?? 'El expediente no coincide con las asignaciones FASP de la institución del capturista.' }}
+                            </div>
+                            <div class="text-xs mt-2 text-red-700">
+                                Recomendación: Rechazar y solicitar corrección / reasignación.
+                            </div>
+                        </div>
+                    @else
+                        <div class="mb-6 px-4 py-3 rounded-lg bg-green-100 text-green-800 border border-green-200">
+                            <div class="font-semibold">✓ Asignación correcta</div>
+                            <div class="text-sm mt-1">
+                                La estructura FASP coincide con las asignaciones de la institución del capturista.
+                            </div>
+                        </div>
+                @endif
+
                 {{-- ===================== DATOS GENERALES ===================== --}}
                 <div class="border border-gray-200 rounded-xl p-6 mb-6">
                     <h4 class="text-lg font-semibold text-[#691C32] mb-4">Datos generales</h4>
@@ -187,21 +207,130 @@
                     </div>
                 </div>
 
+                {{-- Panel: Asignaciones FASP de la institución del capturista --}}
+                <div class="mb-6 bg-white border border-gray-200 rounded-2xl p-5">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <h4 class="text-lg font-semibold text-[#691C32]">Asignaciones FASP (institución del capturista)</h4>
+                            <p class="text-sm text-gray-600 mt-1">
+                                Comparación rápida entre el expediente y lo asignado para el año/entidad.
+                            </p>
+                        </div>
+
+                        <a href="{{ route('validador.fasp_asignaciones_institucion.index', ['year' => $expediente->anio_ejercicio, 'entidad' => $expediente->entidad ?? '8300']) }}"
+                        class="inline-flex items-center px-3 py-2 bg-gray-100 text-gray-800 text-xs font-semibold rounded-md hover:bg-gray-200 transition">
+                            Ir a asignaciones →
+                        </a>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                        <div class="bg-gray-50 rounded-xl p-3">
+                            <div class="text-xs text-gray-500">Institución</div>
+                            <div class="font-semibold text-gray-800">
+                                {{ $institucionNombre ?? 'N/A (sin relación institucion en User)' }}
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-3">
+                            <div class="text-xs text-gray-500">Año / Entidad</div>
+                            <div class="font-semibold text-gray-800">
+                                {{ $expediente->anio_ejercicio }} / {{ $expediente->entidad ?? '8300' }}
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 rounded-xl p-3">
+                            <div class="text-xs text-gray-500">Eje / Programa / Subprograma</div>
+                            <div class="font-semibold text-gray-800">
+                                {{ $expediente->eje }} / {{ $expediente->programa }} / {{ $expediente->subprograma }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="text-xs font-semibold text-gray-600 mb-2">
+                            Subprogramas asignados para:
+                            <span class="text-gray-800">{{ $expediente->eje }} / {{ $expediente->programa }}</span>
+                        </div>
+
+                        @if(isset($subprogramasAsignados) && $subprogramasAsignados->count())
+                            <div class="flex flex-wrap gap-2">
+                                @foreach($subprogramasAsignados as $sub)
+                                    @php $isActual = (string)$sub === (string)$expediente->subprograma; @endphp
+
+                                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold
+                                        {{ $isActual ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-gray-100 text-gray-800' }}">
+                                        {{ $sub }}
+                                        @if($isActual) <span class="ml-1">★</span> @endif
+                                    </span>
+                                @endforeach
+                            </div>
+
+                            @if(!in_array((string)$expediente->subprograma, $subprogramasAsignados->map(fn($x)=>(string)$x)->all(), true))
+                                <div class="mt-3 px-4 py-3 rounded-lg bg-red-50 text-red-700 border border-red-100 text-sm">
+                                    ⚠️ El subprograma del expediente <b>{{ $expediente->subprograma }}</b> no aparece dentro de los asignados para este eje/programa.
+                                </div>
+                            @endif
+                        @else
+                            <div class="px-4 py-3 rounded-lg bg-yellow-50 text-yellow-800 border border-yellow-100 text-sm">
+                                No se encontraron subprogramas asignados para este Eje/Programa (o la institución no tiene asignaciones para ese año/entidad).
+                            </div>
+                        @endif
+                    </div>
+                </div>
+
+                {{-- Resumen completo de asignaciones de la institución --}}
+                <div class="mb-6 bg-white border border-gray-200 rounded-2xl p-5">
+                    <h4 class="text-lg font-semibold text-[#691C32]">Todo lo asignado a la institución</h4>
+                    <p class="text-sm text-gray-600 mt-1">
+                        Eje/Programa con sus subprogramas asignados para {{ $expediente->anio_ejercicio }} / {{ $expediente->entidad ?? '8300' }}.
+                    </p>
+
+                    @if(isset($resumenAsignaciones) && $resumenAsignaciones->count())
+                        <div class="mt-4 space-y-3">
+                            @foreach($resumenAsignaciones as $row)
+                                @php
+                                    $esMismo = ((string)$row['eje'] === (string)$expediente->eje) && ((string)$row['programa'] === (string)$expediente->programa);
+                                @endphp
+
+                                <div class="border rounded-xl p-4 {{ $esMismo ? 'bg-blue-50 border-blue-200' : 'bg-gray-50 border-gray-200' }}">
+                                    <div class="flex items-center justify-between gap-3">
+                                        <div class="font-semibold text-gray-800">
+                                            Eje {{ $row['eje'] }} · Programa {{ $row['programa'] }}
+                                            @if($esMismo)
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-800">
+                                                    Coincide con el expediente
+                                                </span>
+                                            @endif
+                                        </div>
+                                        <div class="text-xs text-gray-500">
+                                            {{ $row['subprogramas']->count() }} subprograma(s)
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-3 flex flex-wrap gap-2">
+                                        @foreach($row['subprogramas'] as $sub)
+                                            @php $isActual = $esMismo && ((string)$sub === (string)$expediente->subprograma); @endphp
+
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold
+                                                {{ $isActual ? 'bg-blue-100 text-blue-800 border border-blue-200' : 'bg-gray-100 text-gray-800' }}">
+                                                {{ $sub }}
+                                                @if($isActual) <span class="ml-1">★</span> @endif
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="mt-4 px-4 py-3 rounded-lg bg-yellow-50 text-yellow-800 border border-yellow-100 text-sm">
+                            No hay asignaciones registradas para la institución del capturista en este año/entidad.
+                        </div>
+                    @endif
+                </div>
+
                 {{-- ===================== DECISIÓN DEL VALIDADOR ===================== --}}
                 <div class="border border-gray-200 rounded-xl p-6">
                     <h4 class="text-lg font-semibold text-[#691C32] mb-4">Dictamen del validador</h4>
-
-                    @if ($errors->any())
-                        <div class="mb-4 px-4 py-3 rounded bg-red-100 text-red-800 text-sm">
-                            <strong>Se encontraron algunos errores:</strong>
-                            <ul class="mt-2 list-disc list-inside">
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
 
                     @if ($errors->any())
                         <div class="mb-4 px-4 py-3 rounded bg-red-100 text-red-800 text-sm">
@@ -216,7 +345,6 @@
 
                     <form action="{{ route('validador.expedientes.decidir', $expediente) }}" method="POST">
                         @csrf
-
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">
@@ -226,9 +354,18 @@
                                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm text-sm
                                                focus:ring-[#691C32] focus:border-[#691C32]">
                                     <option value="">Seleccione...</option>
-                                    <option value="aprobar"  {{ old('decision') === 'aprobar' ? 'selected' : '' }}>Aprobar</option>
+                                    <option value="aprobar"
+                                            {{ old('decision') === 'aprobar' ? 'selected' : '' }}
+                                            {{ (isset($coincideAsignacion) && !$coincideAsignacion) ? 'disabled' : '' }}>
+                                        Aprobar
+                                    </option>
                                     <option value="rechazar" {{ old('decision') === 'rechazar' ? 'selected' : '' }}>Rechazar</option>
                                 </select>
+                                @if(isset($coincideAsignacion) && !$coincideAsignacion)
+                                    <p class="mt-2 text-xs text-red-600 font-semibold">
+                                        No puedes aprobar porque el expediente está fuera de asignación (Eje/Programa/Subprograma).
+                                    </p>
+                                @endif
                                 <p class="mt-1 text-[11px] text-gray-500">
                                     Si rechaza, capture observaciones claras para el capturista.
                                 </p>
@@ -265,31 +402,39 @@
     </div>
 
     <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const decision = document.querySelector('select[name="decision"]');
-    const obs = document.getElementById('observaciones');
-    const hint = document.getElementById('hint-observaciones');
+    document.addEventListener('DOMContentLoaded', () => {
+        const decision = document.querySelector('select[name="decision"]');
+        const obs = document.getElementById('observaciones');
+        const hint = document.getElementById('hint-observaciones');
 
-    function sync() {
-        const val = decision?.value;
-        if (!obs || !hint) return;
+        const sugerida = @json($observacionSugerida ?? null);
+        const fueraAsignacion = @json(isset($coincideAsignacion) ? !$coincideAsignacion : false);
 
-        if (val === 'rechazar') {
-            obs.setAttribute('required', 'required');
-            hint.textContent = 'Para RECHAZAR, escribe observaciones claras (mínimo 10 caracteres).';
-            hint.classList.remove('text-gray-500');
-            hint.classList.add('text-red-600', 'font-semibold');
-        } else {
-            obs.removeAttribute('required');
-            hint.textContent = 'Si apruebas, las observaciones son opcionales. Si rechazas, son obligatorias.';
-            hint.classList.remove('text-red-600', 'font-semibold');
-            hint.classList.add('text-gray-500');
+        function sync() {
+            const val = decision?.value;
+            if (!obs || !hint) return;
+
+            if (val === 'rechazar') {
+                obs.setAttribute('required', 'required');
+                hint.textContent = 'Para RECHAZAR, escribe observaciones claras (mínimo 10 caracteres).';
+                hint.classList.remove('text-gray-500');
+                hint.classList.add('text-red-600', 'font-semibold');
+
+                // Autollenar SOLO si está vacío y es fuera de asignación
+                if (fueraAsignacion && sugerida && obs.value.trim() === '') {
+                    obs.value = sugerida;
+                }
+            } else {
+                obs.removeAttribute('required');
+                hint.textContent = 'Si apruebas, las observaciones son opcionales. Si rechazas, son obligatorias.';
+                hint.classList.remove('text-red-600', 'font-semibold');
+                hint.classList.add('text-gray-500');
+            }
         }
-    }
 
-    decision?.addEventListener('change', sync);
-    sync(); // estado inicial
-});
-</script>
+        decision?.addEventListener('change', sync);
+        sync();
+    });
+    </script>
 
 </x-app-layout>

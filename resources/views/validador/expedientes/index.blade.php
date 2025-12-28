@@ -40,6 +40,7 @@
                     <table class="min-w-full text-sm">
                         <thead class="bg-gray-100 text-gray-700">
                             <tr>
+                                <th class="px-4 py-3 border-b text-center">Asignación</th>
                                 <th class="px-4 py-3 border-b text-left">Folio</th>
                                 <th class="px-4 py-3 border-b text-left">Proyecto</th>
                                 <th class="px-4 py-3 border-b text-left">Dependencia</th>
@@ -63,7 +64,19 @@
                                     };
                                 @endphp
 
-                                <tr class="hover:bg-gray-50">
+                                <tr class="hover:bg-gray-50 {{ !empty($exp->fuera_asignacion) ? 'bg-red-50' : '' }}">
+                                    <td class="px-4 py-3 text-center">
+                                        @if(!empty($exp->fuera_asignacion))
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-100 text-red-800">
+                                                ⚠️ Fuera
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold bg-green-100 text-green-800">
+                                                ✓ OK
+                                            </span>
+                                        @endif
+                                    </td>
+
                                     <td class="px-4 py-3">
                                         <span class="font-semibold text-gray-900">{{ $exp->folio }}</span>
                                     </td>
@@ -99,7 +112,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="px-4 py-8 text-center text-gray-500">
+                                    <td colspan="8" class="px-4 py-8 text-center text-gray-500">
                                         No hay expedientes en validación por el momento.
                                     </td>
                                 </tr>

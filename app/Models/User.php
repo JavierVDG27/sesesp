@@ -43,7 +43,7 @@ protected $fillable = [
 
     public function institucion()
     {
-        return $this->belongsTo(Institucion::class, 'institucion_id');
+        return $this->belongsTo(\App\Models\Institucion::class, 'institucion_id');
     }
 
     public function subdependencia()
@@ -51,4 +51,8 @@ protected $fillable = [
         return $this->belongsTo(Subdependencia::class, 'subdependencia_id');
     }
 
+    public function faspAsignaciones()
+    {
+        return $this->hasMany(\App\Models\FaspAsignacion::class, 'user_id');
+    }
 }

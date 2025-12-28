@@ -92,7 +92,7 @@
 
                     {{-- Eliminar catálogo del año seleccionado --}}
                     <form method="POST" action="{{ route('admin.fasp.destroyByYear') }}"
-                          onsubmit="return confirm('¿Seguro que quieres eliminar TODO el catálogo FASP del año {{ $year }}? Esta acción no se puede deshacer.');">
+                          onsubmit="return confirm('¿Seguro que quieres eliminar TODO el catálogo FASP del año {{ $year }} Y sus Asignaciones? Esta acción no se puede deshacer.');">
                         @csrf
                         @method('DELETE')
                         <input type="hidden" name="year" value="{{ $year }}">

@@ -7,76 +7,90 @@
 
     <div class="py-12 bg-gray-50 min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+
             <div class="bg-white overflow-hidden shadow-lg rounded-2xl p-8">
                 <h3 class="text-2xl font-bold text-[#691C32] mb-2">
-                    Bienvenido(a), {{ Auth::user()->name }}
+                    Bienvenido(a), {{ Auth::user()->nombres ?? Auth::user()->name }}
                 </h3>
+
                 <p class="text-gray-700 leading-relaxed">
-                    Desde este panel podrás <span class="font-semibold">capturar, consultar y dar seguimiento a los expedientes técnicos</span>
-                    que forman parte del Sistema de Gestión de Expedientes del SESESP.
+                    Desde este panel podrás <span class="font-semibold">capturar, consultar y dar seguimiento</span> a los expedientes técnicos.
                 </p>
+
+                {{-- Aviso si no hay asignaciones --}}
+                @php $tieneAsignaciones = ($asignacionesCount ?? 0) > 0; @endphp
+
+                @if(! $tieneAsignaciones)
+                    <div class="mt-6 px-4 py-3 rounded-lg bg-yellow-50 text-yellow-800 border border-yellow-100 text-sm">
+                        ⚠️ Por el momento tu institución no tiene subprogramas FASP asignados.
+                        Solicita al validador que realice la asignación para poder capturar expedientes.
+                    </div>
+                @endif
 
                 {{-- ACCIONES RÁPIDAS --}}
                 <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {{-- Crear expediente --}}
+
+                    {{-- Mis asignaciones FASP --}}
                     <div class="bg-[#9F2241]/10 p-6 rounded-xl shadow hover:shadow-md hover:bg-[#9F2241]/20 transition">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h4 class="font-semibold text-[#9F2241] mb-1 text-lg">Mis asignaciones FASP</h4>
+                                <p class="text-gray-600 text-sm mb-3">
+                                    Subprogramas asignados a tu institución para realizar expedientes.
+                                </p>
+                            </div>
+
+                            <span class="inline-flex items-center px-6 py-6 rounded-full text-xs font-semibold
+                                {{ $tieneAsignaciones ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-700' }}">
+                                {{ $asignacionesCount ?? 0 }}
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- Crear expediente --}}
+                    <div class="bg-[#9F2241]/10 p-6 rounded-xl shadow transition
+                        {{ $tieneAsignaciones ? 'hover:shadow-md hover:bg-[#9F2241]/20' : 'opacity-60' }}">
                         <h4 class="font-semibold text-[#9F2241] mb-1 text-lg">Crear nuevo expediente</h4>
                         <p class="text-gray-600 text-sm mb-3">
-                            Inicia la captura de un nuevo expediente técnico, registrando los datos generales y el presupuesto del proyecto.
+                            Inicia la captura de un nuevo expediente técnico con base en lo asignado a tu institución.
                         </p>
-                        <a href="{{ route('expedientes.create') }}"
-                           class="inline-flex items-center px-3 py-2 bg-[#691C32] text-white text-sm font-medium rounded-md hover:bg-[#4e1324] transition">
-                            Ir a captura de expediente
-                            <span class="ml-1">→</span>
-                        </a>
+
+                        @if($tieneAsignaciones)
+                            <a href="{{ route('expedientes.create') }}"
+                               class="inline-flex items-center px-3 py-2 bg-[#691C32] text-white text-sm font-medium rounded-md hover:bg-[#4e1324] transition">
+                                Ir a captura de expediente <span class="ml-1">→</span>
+                            </a>
+                        @else
+                            <span class="inline-flex items-center px-3 py-2 bg-gray-200 text-gray-600 text-sm font-medium rounded-md cursor-not-allowed">
+                                Requiere asignación
+                            </span>
+                        @endif
                     </div>
 
                     {{-- Mis expedientes --}}
                     <div class="bg-[#9F2241]/10 p-6 rounded-xl shadow hover:shadow-md hover:bg-[#9F2241]/20 transition">
                         <h4 class="font-semibold text-[#9F2241] mb-1 text-lg">Mis expedientes</h4>
                         <p class="text-gray-600 text-sm mb-3">
-                            Consulta los expedientes que has capturado, revisa su estatus (Borrador, En revisión, Aprobado, Rechazado)
-                            y continúa su edición.
+                            Consulta tus expedientes, revisa estatus (Borrador, En validación, Aprobado, Rechazado) y continúa su edición.
                         </p>
                         <a href="{{ route('expedientes.index') }}"
                            class="inline-flex items-center px-3 py-2 bg-[#691C32] text-white text-sm font-medium rounded-md hover:bg-[#4e1324] transition">
-                            Ver lista de expedientes
-                            <span class="ml-1">→</span>
+                            Ver lista de expedientes <span class="ml-1">→</span>
                         </a>
                     </div>
 
-                    {{-- Guía rápida / ayuda --}}
-                    <div class="bg-[#9F2241]/10 p-6 rounded-xl shadow hover:shadow-md hover:bg-[#9F2241]/20 transition">
-                        <h4 class="font-semibold text-[#9F2241] mb-1 text-lg">Guía rápida de captura</h4>
-                        <p class="text-gray-600 text-sm mb-3">
-                            Recuerda capturar primero los datos generales, después la descripción técnica, metas e indicadores,
-                            presupuesto y finalmente adjuntar la documentación correspondiente.
-                        </p>
-                        <ul class="text-xs text-gray-600 list-disc list-inside space-y-1">
-                            <li>Los expedientes se crean en estatus <span class="font-semibold">Borrador</span>.</li>
-                            <li>Antes de enviar a revisión, verifica los campos obligatorios.</li>
-                            <li>Puedes regresar y editar un expediente en borrador en cualquier momento.</li>
-                        </ul>
-                    </div>
                 </div>
 
-                {{-- (Opcional) sección para futuro: resumen / indicadores --}}
-                {{-- 
-                <div class="mt-10 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="p-4 bg-gray-100 rounded-xl text-center">
-                        <p class="text-xs text-gray-500 uppercase tracking-wide">Expedientes en borrador</p>
-                        <p class="text-2xl font-bold text-[#691C32]">{{ $borradores ?? 0 }}</p>
-                    </div>
-                    <div class="p-4 bg-gray-100 rounded-xl text-center">
-                        <p class="text-xs text-gray-500 uppercase tracking-wide">En revisión</p>
-                        <p class="text-2xl font-bold text-[#691C32]">{{ $revision ?? 0 }}</p>
-                    </div>
-                    <div class="p-4 bg-gray-100 rounded-xl text-center">
-                        <p class="text-xs text-gray-500 uppercase tracking-wide">Aprobados</p>
-                        <p class="text-2xl font-bold text-[#691C32]">{{ $aprobados ?? 0 }}</p>
-                    </div>
+                {{-- Guía rápida --}}
+                <div class="mt-8 bg-gray-50 border border-gray-200 rounded-2xl p-6">
+                    <h4 class="font-semibold text-gray-700 mb-2 text-lg">Guía rápida</h4>
+                    <ul class="text-sm text-gray-600 list-disc list-inside space-y-1">
+                        <li>Captura primero datos generales, después descripción técnica, metas/indicadores, presupuesto y documentación.</li>
+                        <li>Los expedientes se crean en estatus <span class="font-semibold">Borrador</span>.</li>
+                        <li>Si un expediente es <span class="font-semibold">Rechazado</span>, corrige y reenvía a validación.</li>
+                    </ul>
                 </div>
-                --}}
+
             </div>
         </div>
     </div>
