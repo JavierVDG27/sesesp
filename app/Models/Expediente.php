@@ -22,17 +22,30 @@ class Expediente extends Model
     protected $fillable = [
         'folio',
         'nombre_proyecto',
-        'dependencia',
         'tipo_recurso',
         'anio_ejercicio',
         'estatus',
+
         'user_id',
+        'institucion_id',
+
         'entidad',
         'eje',
         'programa',
         'subprograma',
+
+        'capitulo',
+        'concepto',
+        'partida_generica',
+
         'tema',
         'area_ejecutora',
+
+        'bienes',
+    ];
+
+    protected $casts = [
+        'bienes' => 'array',
     ];
 
     // ===================== Relaciones =====================
@@ -51,6 +64,11 @@ class Expediente extends Model
     {
         // Ordenados del más reciente al más viejo
         return $this->hasMany(HistorialModificacion::class)->latest();
+    }
+        //Lista del area ejecutora para el expediente
+    public function areaEjecutora()
+    {
+        return $this->belongsTo(\App\Models\Institucion::class, 'area_ejecutora');
     }
 
     // ===================== Scopes =====================

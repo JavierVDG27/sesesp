@@ -20,6 +20,7 @@ use App\Http\Controllers\Validador\FaspDistribucionesController;
 
 // Capturista
 use App\Models\FaspAsignacionInstitucion;
+use App\Http\Controllers\Capturista\DashboardController as CapturistaDashboardController;
 
 // Página principal
 Route::get('/', function () {
@@ -100,38 +101,25 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/catalogo-fasp/recalcular', [FaspCatalogoController::class, 'recalcular'])->name('fasp.recalcular');
     });
 
+
 // =========================
 // CAPTURISTA
 // =========================
-    Route::middleware(['auth', 'role:capturista'])->group(function () {
+Route::middleware(['auth', 'role:capturista'])->group(function () {
 
-        Route::get('/capturista/dashboard', function () {
-            $user = auth()->user();
-            $institucionId = $user?->institucion_id;
+    Route::get('/capturista/dashboard', [CapturistaDashboardController::class, 'index'])
+     ->name('capturista.dashboard');
 
-            $asignacionesCount = 0;
+    // Expedientes (capturista)
+    Route::resource('expedientes', ExpedienteController::class)
+        ->only(['index','create','store','edit','update','destroy']);
 
-            if ($institucionId) {
-                $asignacionesCount = FaspAsignacionInstitucion::query()
-                    ->activas()
-                    ->where('institucion_id', $institucionId)
-                    ->where('nivel', 3)
-                    ->count();
-            }
+    Route::post('/expedientes/{expediente}/enviar-validacion', [ExpedienteController::class, 'enviarValidacion'])
+        ->name('expedientes.enviar-validacion');
 
-            return view('capturista.dashboard', compact('asignacionesCount'));
-        })->name('capturista.dashboard');
-
-        // ✅ Expedientes (capturista)
-        Route::resource('expedientes', ExpedienteController::class)
-            ->only(['index','create','store','edit','update','destroy']);
-
-        Route::post('/expedientes/{expediente}/enviar-validacion', [ExpedienteController::class, 'enviarValidacion'])
-            ->name('expedientes.enviar-validacion');
-
-        Route::post('/expedientes/{expediente}/reenviar-validacion', [ExpedienteController::class, 'reenviarValidacion'])
-            ->name('expedientes.reenviar-validacion');
-    });
+    Route::post('/expedientes/{expediente}/reenviar-validacion', [ExpedienteController::class, 'reenviarValidacion'])
+        ->name('expedientes.reenviar-validacion');
+});
 
 // =========================
 // VALIDADOR
