@@ -150,4 +150,25 @@ class Expediente extends Model
         return $obs ? Str::limit($obs, $len) : null;
     }
 
+
+    // ===================== Expediente segunda parte =====================
+    public function detalle()
+    {
+        return $this->hasOne(\App\Models\ExpedienteDetalle::class);
+    }
+
+    public function estructuraProgramatica()
+    {
+        return $this->hasMany(\App\Models\ExpedienteEstructuraProgramatica::class)->orderBy('orden');
+    }
+
+    public function especificaciones()
+    {
+        return $this->hasMany(\App\Models\ExpedienteEspecificacion::class)->orderBy('orden');
+    }
+
+    public function entregables()
+    {
+        return $this->hasMany(\App\Models\ExpedienteEntregable::class)->orderBy('orden');
+    }
 }

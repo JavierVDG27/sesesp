@@ -162,7 +162,7 @@
                                                 </a>
 
                                                 {{-- Ir a 2da parte (por ahora ancla al edit) --}}
-                                                <a href="{{ route('expedientes.edit', $expediente) }}#segunda-parte"
+                                                <a href="{{ route('expedientes.segunda.edit', $expediente) }}"
                                                    class="inline-flex items-center justify-center px-2 py-1 rounded-md
                                                           bg-[#9F2241] text-white text-[11px] hover:bg-[#691C32] transition">
                                                     Ir a 2da parte →

@@ -21,6 +21,7 @@ use App\Http\Controllers\Validador\FaspDistribucionesController;
 // Capturista
 use App\Models\FaspAsignacionInstitucion;
 use App\Http\Controllers\Capturista\DashboardController as CapturistaDashboardController;
+use App\Http\Controllers\Capturista\ExpedienteSegundaParteController;
 
 // Página principal
 Route::get('/', function () {
@@ -108,17 +109,30 @@ Route::middleware(['auth', 'role:admin'])
 Route::middleware(['auth', 'role:capturista'])->group(function () {
 
     Route::get('/capturista/dashboard', [CapturistaDashboardController::class, 'index'])
-     ->name('capturista.dashboard');
+        ->name('capturista.dashboard');
 
-    // Expedientes (capturista)
+    // Expedientes (1ra parte)
     Route::resource('expedientes', ExpedienteController::class)
         ->only(['index','create','store','edit','update','destroy']);
 
+    // (si luego los vuelves a usar)
     Route::post('/expedientes/{expediente}/enviar-validacion', [ExpedienteController::class, 'enviarValidacion'])
         ->name('expedientes.enviar-validacion');
 
     Route::post('/expedientes/{expediente}/reenviar-validacion', [ExpedienteController::class, 'reenviarValidacion'])
         ->name('expedientes.reenviar-validacion');
+
+    // =========================
+    // 2da parte (WIZARD)
+    // =========================
+    Route::get('/expedientes/{expediente}/segunda-parte', [ExpedienteSegundaParteController::class, 'edit'])
+        ->name('expedientes.segunda.edit');
+
+    Route::post('/expedientes/{expediente}/segunda-parte/autosave/{section}', [ExpedienteSegundaParteController::class, 'autosave'])
+        ->name('expedientes.segunda.autosave');
+
+    Route::post('/expedientes/{expediente}/segunda-parte/enviar-revision', [ExpedienteSegundaParteController::class, 'enviarRevision'])
+        ->name('expedientes.segunda.enviar');
 });
 
 // =========================

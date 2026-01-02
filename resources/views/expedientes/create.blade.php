@@ -318,6 +318,7 @@
                         </a>
 
                         <button type="submit"
+                                href="{{ route('expedientes.index') }}"
                                 class="inline-flex items-center px-4 py-2 bg-[#691C32] text-white text-sm font-medium rounded-md hover:bg-[#4e1324] transition">
                             Guardar 1ra Parte
                         </button>
