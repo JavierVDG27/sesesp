@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Capturista;
 use App\Http\Controllers\Controller;
 use App\Models\Expediente;
 use App\Models\ExpedienteDetalle;
-use App\Models\FaspCatalogo;
 use App\Models\ExpedienteEstructuraProgramatica;
 use App\Models\ExpedienteEspecificacion;
 use App\Models\ExpedienteEntregable;
+use App\Models\FaspCatalogo;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -23,7 +24,7 @@ class ExpedienteSegundaParteController extends Controller
             return redirect()->route('expedientes.index')->with('error', 'Expediente aprobado: no editable.');
         }
 
-        // 1) Cargar / crear detalle con defaults (1 sola vez por expediente)
+        // 1) Detalle (defaults)
         $detalle = ExpedienteDetalle::query()->firstOrCreate(
             ['expediente_id' => $expediente->id],
             [
@@ -33,7 +34,6 @@ class ExpedienteSegundaParteController extends Controller
                 'ejercicio_fiscal_label' => 'EJERCICIO FISCAL AÑO',
                 'logo_path' => 'images/LogoExpediente.png',
 
-                // Defaults (editables)
                 'no_aplica_9'  => 'No aplica.',
                 'no_aplica_10' => 'No aplica.',
                 'no_aplica_11' => 'No aplica.',
@@ -42,12 +42,10 @@ class ExpedienteSegundaParteController extends Controller
                 'no_aplica_14' => 'No aplica.',
                 'no_aplica_15' => 'No aplica.',
                 'no_aplica_16' => 'No aplica.',
-
-                // NUEVOS 17..20 (requiere migración)
                 'no_aplica_17' => 'No aplica.',
                 'no_aplica_18' => 'No aplica.',
                 'no_aplica_19' => 'No aplica.',
-                'no_aplica_20' => "Anexo 1. Cotización.\nAnexo 2. Anexo A Computadoras de Escritorio.\nAnexo 3. Anexo B Computadoras Portátiles.",
+                'no_aplica_20' => "Anexo 1. Cotización.",
 
                 'marco_legal_json' => json_encode([], JSON_UNESCAPED_UNICODE),
                 'segunda_parte_completa' => false,
@@ -56,7 +54,7 @@ class ExpedienteSegundaParteController extends Controller
 
         $expediente->setRelation('detalle', $detalle);
 
-        // 2) Mapas del catálogo para render de nombres (tomados de la 1ra parte)
+        // 2) Mapas del catálogo para nombres (desde 1ra parte)
         $year = (int)$expediente->anio_ejercicio;
         $entidad = (string)$expediente->entidad;
 
@@ -67,19 +65,15 @@ class ExpedienteSegundaParteController extends Controller
         $concepto = (string)$expediente->concepto;
         $pg = (string)$expediente->partida_generica;
 
-        // ===== Niveles 1-3 (subprograma con parents) =====
+        // Nivel 3 (subprograma con parents)
         $nivel3 = FaspCatalogo::query()
-            ->where('year', $year)
-            ->where('entidad', $entidad)
+            ->where('year', $year)->where('entidad', $entidad)
             ->where('nivel', 3)
-            ->where('eje', $eje)
-            ->where('programa', $programa)
-            ->where('subprograma', $subprograma)
+            ->where('eje', $eje)->where('programa', $programa)->where('subprograma', $subprograma)
             ->with([
                 'parent:id,year,entidad,nivel,parent_id,eje,programa,nombre',
                 'parent.parent:id,year,entidad,nivel,eje,nombre'
-            ])
-            ->first();
+            ])->first();
 
         $mapNombresEje = [];
         $mapNombresPrograma = [];
@@ -100,55 +94,44 @@ class ExpedienteSegundaParteController extends Controller
             }
         }
 
-        // ===== Nivel 6 (partida genérica) =====
+        // Nivel 6 (partida genérica)
         $mapNombresPartidaGenerica = [];
         $rowPg = FaspCatalogo::query()
-            ->where('year', $year)
-            ->where('entidad', $entidad)
+            ->where('year', $year)->where('entidad', $entidad)
             ->where('nivel', 6)
-            ->where('eje', $eje)
-            ->where('programa', $programa)
-            ->where('subprograma', $subprograma)
-            ->where('capitulo', $capitulo)
-            ->where('concepto', $concepto)
-            ->where('partida_generica', $pg)
+            ->where('eje', $eje)->where('programa', $programa)->where('subprograma', $subprograma)
+            ->where('capitulo', $capitulo)->where('concepto', $concepto)->where('partida_generica', $pg)
             ->first();
 
         if ($rowPg) {
-            $mapNombresPartidaGenerica["{$eje}|{$programa}|{$subprograma}|{$capitulo}|{$concepto}|{$pg}"]
-                = (string)($rowPg->nombre ?? '');
+            $mapNombresPartidaGenerica["{$eje}|{$programa}|{$subprograma}|{$capitulo}|{$concepto}|{$pg}"] =
+                (string)($rowPg->nombre ?? '');
         }
 
-        // ===== Niveles 7/8 (bienes) =====
+        // Niveles 7/8 (bienes)
         $mapNombresBien = [];
         $bienes = (array)($expediente->bienes ?? []);
 
         if (!empty($bienes)) {
             $rowsBien = FaspCatalogo::query()
-                ->where('year', $year)
-                ->where('entidad', $entidad)
+                ->where('year', $year)->where('entidad', $entidad)
                 ->whereIn('nivel', [7, 8])
-                ->where('eje', $eje)
-                ->where('programa', $programa)
-                ->where('subprograma', $subprograma)
-                ->where('capitulo', $capitulo)
-                ->where('concepto', $concepto)
-                ->where('partida_generica', $pg)
+                ->where('eje', $eje)->where('programa', $programa)->where('subprograma', $subprograma)
+                ->where('capitulo', $capitulo)->where('concepto', $concepto)->where('partida_generica', $pg)
                 ->whereIn('bien', $bienes)
                 ->get(['bien', 'nombre']);
 
             foreach ($rowsBien as $rb) {
                 $bien = (string)$rb->bien;
-                $mapNombresBien["{$eje}|{$programa}|{$subprograma}|{$capitulo}|{$concepto}|{$pg}|{$bien}"]
-                    = (string)($rb->nombre ?? '');
+                $mapNombresBien["{$eje}|{$programa}|{$subprograma}|{$capitulo}|{$concepto}|{$pg}|{$bien}"] =
+                    (string)($rb->nombre ?? '');
             }
         }
 
-        // ===== Labels para UI (default) =====
-        $ejeKey = "{$expediente->eje}|{$expediente->programa}|{$expediente->subprograma}";
+        // Labels default
         $ejeNombre = $mapNombresEje[(string)$expediente->eje] ?? '';
         $programaNombre = $mapNombresPrograma["{$expediente->eje}|{$expediente->programa}"] ?? '';
-        $subNombre = $mapNombresSubprograma[$ejeKey]['nombre'] ?? '';
+        $subNombre = $mapNombresSubprograma["{$expediente->eje}|{$expediente->programa}|{$expediente->subprograma}"]['nombre'] ?? '';
 
         $ejeDefault = trim((string)$expediente->eje) . '. ' . trim($ejeNombre);
         $programaDefault = trim((string)$expediente->programa) . '. ' . trim($programaNombre);
@@ -158,15 +141,24 @@ class ExpedienteSegundaParteController extends Controller
         $pgNombre = $mapNombresPartidaGenerica[$pgKey] ?? '';
         $partidaLabel = trim((string)$expediente->partida_generica) . '. ' . trim((string)$pgNombre);
 
-        // 3) Seed de Tablas 6/7/8 (crea filas por bien si no existen)
+        // 3) Seed de Tablas 6/7/8 (filas por bien)
         $this->seedTablasPorBien($expediente, $programaDefault, $subDefault, $partidaLabel, $mapNombresBien);
 
-        // 4) Cargar tablas para el wizard
+        // 4) Cargar tablas
         $t6 = $expediente->estructuraProgramatica()->get()->toArray();
         $t7 = $expediente->especificaciones()->get()->toArray();
         $t8 = $expediente->entregables()->get()->toArray();
 
-        // === FIX: Asegurar que t7 recibe Cantidad/Unidad desde t6 y t8 recibe Cantidad desde t6 ===
+        // FIX A: decodificar descripcion_tecnica para que el blade recargue bien
+        foreach ($t7 as &$r) {
+            $raw = $r['descripcion_tecnica'] ?? '[]';
+            if (!is_array($raw)) {
+                $r['descripcion_tecnica'] = json_decode((string)$raw, true) ?: [];
+            }
+        }
+        unset($r);
+
+        // FIX B: asegurar Cantidad/Unidad desde Tabla 6 hacia Tabla 7/8
         $mapT6 = [];
         foreach ($t6 as $r) {
             $ord = (int)($r['orden'] ?? 0);
@@ -211,7 +203,7 @@ class ExpedienteSegundaParteController extends Controller
     }
 
     /**
-     * Autosave por sección del wizard.
+     * Autosave por sección.
      */
     public function autosave(Request $request, Expediente $expediente, string $section)
     {
@@ -230,7 +222,7 @@ class ExpedienteSegundaParteController extends Controller
                 $data = $request->validate([
                     'titulo_documento'        => ['nullable','string','max:255'],
                     'subtitulo_documento'     => ['nullable','string','max:255'],
-                    'fasp_texto'              => ['nullable','string','max:800'],
+                    'fasp_texto'              => ['nullable','string','max:1200'],
                     'ejercicio_fiscal_label'  => ['nullable','string','max:255'],
                     'anio_override'           => ['nullable','integer','min:2000','max:2100'],
                     'eje_override'            => ['nullable','string','max:255'],
@@ -239,9 +231,7 @@ class ExpedienteSegundaParteController extends Controller
                     'introduccion'            => ['nullable','string'],
                 ]);
 
-                $detalle->fill($data);
-                $detalle->save();
-
+                $detalle->forceFill($data)->save();
                 return response()->json(['ok' => true, 'section' => $section]);
             }
 
@@ -272,7 +262,7 @@ class ExpedienteSegundaParteController extends Controller
                     'justificacion' => ['nullable','string'],
                 ]);
 
-                $detalle->fill($data)->save();
+                $detalle->forceFill($data)->save();
                 return response()->json(['ok' => true, 'section' => $section]);
             }
 
@@ -287,9 +277,11 @@ class ExpedienteSegundaParteController extends Controller
                 ]);
 
                 foreach ($data['rows'] as $r) {
+                    $orden = (int)$r['orden'];
+
                     $row = ExpedienteEstructuraProgramatica::query()
                         ->where('expediente_id', $expediente->id)
-                        ->where('orden', (int)$r['orden'])
+                        ->where('orden', $orden)
                         ->first();
 
                     if (!$row && !empty($r['id'])) {
@@ -301,13 +293,12 @@ class ExpedienteSegundaParteController extends Controller
 
                     if (!$row) continue;
 
-                    $row->unidad_medida = $r['unidad_medida'] ?? '';
+                    $row->unidad_medida = (string)($r['unidad_medida'] ?? '');
                     $row->meta_cantidad = $r['meta_cantidad'] ?? null;
-                    $row->aportacion = $r['aportacion'] ?? '';
+                    $row->aportacion = (string)($r['aportacion'] ?? '');
                     $row->save();
 
-                    // Sync cantidad/unidad hacia tabla 7 y 8
-                    $this->syncCantidadUnidadDesdeTabla6($expediente->id, (int)$row->orden, $row->meta_cantidad, $row->unidad_medida);
+                    $this->syncCantidadUnidadDesdeTabla6($expediente->id, $orden, $row->meta_cantidad, $row->unidad_medida);
                 }
 
                 return response()->json(['ok' => true, 'section' => $section]);
@@ -349,9 +340,9 @@ class ExpedienteSegundaParteController extends Controller
                     }
                     if (!$espec) continue;
 
-                    $precio = isset($r['precio_unitario']) && $r['precio_unitario'] !== '' ? (float)$r['precio_unitario'] : null;
+                    $precio = ($r['precio_unitario'] === '' || $r['precio_unitario'] === null) ? null : (float)$r['precio_unitario'];
 
-                    $espec->titulo_producto = $r['titulo_producto'] ?? $espec->titulo_producto;
+                    $espec->titulo_producto = (string)($r['titulo_producto'] ?? $espec->titulo_producto);
                     $espec->descripcion_tecnica = json_encode(($r['descripcion_tecnica'] ?? []), JSON_UNESCAPED_UNICODE);
                     $espec->cantidad = $cantidad;
                     $espec->unidad_medida = $unidad;
@@ -359,13 +350,13 @@ class ExpedienteSegundaParteController extends Controller
                     $espec->importe_sin_iva = ($precio !== null) ? round($precio * $cantidad, 2) : null;
                     $espec->save();
 
-                    // Costo en tabla 6 = total con IVA del bien (1.16)
+                    // tabla 6 costo = total con IVA (1.16)
                     if ($estructura) {
                         $estructura->costo = ($espec->importe_sin_iva !== null) ? round(((float)$espec->importe_sin_iva) * 1.16, 2) : null;
                         $estructura->save();
                     }
 
-                    // Sync entregables: descripcion = titulo, cantidad = cantidad
+                    // tabla 8: descripcion = titulo
                     $this->syncEntregableDesdeTabla7($expediente->id, $orden, (string)$espec->titulo_producto, $cantidad);
                 }
 
@@ -374,27 +365,22 @@ class ExpedienteSegundaParteController extends Controller
 
             if ($section === 'tablas_8') {
                 $data = $request->validate([
-                    // campos globales (una sola vez)
                     'tabla8_fecha_entrega' => ['nullable','string'],
                     'tabla8_responsable_validar' => ['nullable','string'],
                     'tabla8_lugar_entrega' => ['nullable','string'],
-
-                    // filas (solo para asegurar orden/ids, NO se captura fecha/responsable/lugar por fila)
                     'rows' => ['required','array'],
                     'rows.*.id' => ['nullable','integer'],
                     'rows.*.orden' => ['required','integer','min:1'],
                 ]);
 
-                // Guardar globales en detalle
-                $detalle->tabla8_fecha_entrega = $data['tabla8_fecha_entrega'] ?? '';
-                $detalle->tabla8_responsable_validar = $data['tabla8_responsable_validar'] ?? '';
-                $detalle->tabla8_lugar_entrega = $data['tabla8_lugar_entrega'] ?? '';
-                $detalle->save();
+                $detalle->forceFill([
+                    'tabla8_fecha_entrega' => (string)($data['tabla8_fecha_entrega'] ?? ''),
+                    'tabla8_responsable_validar' => (string)($data['tabla8_responsable_validar'] ?? ''),
+                    'tabla8_lugar_entrega' => (string)($data['tabla8_lugar_entrega'] ?? ''),
+                ])->save();
 
-                // Asegurar que Tabla 8 tenga num/descripcion/cantidad actualizados (cantidad viene de Tabla 6)
                 foreach ($data['rows'] as $r) {
                     $orden = (int)$r['orden'];
-
                     $ent = ExpedienteEntregable::query()
                         ->where('expediente_id', $expediente->id)
                         ->where('orden', $orden)
@@ -403,8 +389,7 @@ class ExpedienteSegundaParteController extends Controller
                     if ($ent) {
                         $ent->num = $orden;
 
-                        // cantidad desde tabla 6 (estructura)
-                        $estructura = \App\Models\ExpedienteEstructuraProgramatica::query()
+                        $estructura = ExpedienteEstructuraProgramatica::query()
                             ->where('expediente_id', $expediente->id)
                             ->where('orden', $orden)
                             ->first();
@@ -417,10 +402,6 @@ class ExpedienteSegundaParteController extends Controller
                 return response()->json(['ok' => true, 'section' => $section]);
             }
 
-
-            // =========================
-            // PASO: 9..20 (textos)
-            // =========================
             if ($section === 'seccion_9_20') {
                 $data = $request->validate([
                     'no_aplica_9'  => ['nullable','string'],
@@ -437,13 +418,11 @@ class ExpedienteSegundaParteController extends Controller
                     'no_aplica_20' => ['nullable','string'],
                 ]);
 
-                $detalle->fill($data)->save();
+                // forceFill para que sí persista aunque no esté en fillable
+                $detalle->forceFill($data)->save();
                 return response()->json(['ok' => true, 'section' => $section]);
             }
 
-            // =========================
-            // PASO: 21 (firmas)
-            // =========================
             if ($section === 'seccion_17_21') {
                 $data = $request->validate([
                     'responsable_subprograma_nombre' => ['nullable','string','max:255'],
@@ -452,21 +431,16 @@ class ExpedienteSegundaParteController extends Controller
                     'titular_dependencia_cargo'      => ['nullable','string','max:255'],
                 ]);
 
-                $detalle->fill($data)->save();
+                $detalle->forceFill($data)->save();
                 return response()->json(['ok' => true, 'section' => $section]);
             }
 
-            return response()->json([
-                'ok' => false,
-                'message' => 'Sección no reconocida: '.$section,
-            ], 422);
+            return response()->json(['ok' => false, 'message' => 'Sección no reconocida: '.$section], 422);
         });
     }
 
-    // =========================
-    // Helpers de sincronización
-    // =========================
-    private function syncCantidadUnidadDesdeTabla6(int $expedienteId, int $orden, ?int $cantidad, ?string $unidad)
+    // ===== Helpers sync =====
+    private function syncCantidadUnidadDesdeTabla6(int $expedienteId, int $orden, ?int $cantidad, ?string $unidad): void
     {
         $cantidadInt = (int)($cantidad ?? 0);
         $unidadStr = (string)($unidad ?? '');
@@ -485,7 +459,6 @@ class ExpedienteSegundaParteController extends Controller
             }
             $espec->save();
 
-            // Actualiza costo en tabla 6 (si hay importe)
             $estructura = ExpedienteEstructuraProgramatica::query()
                 ->where('expediente_id', $expedienteId)
                 ->where('orden', $orden)
@@ -500,7 +473,7 @@ class ExpedienteSegundaParteController extends Controller
         }
     }
 
-    private function syncEntregableDesdeTabla7(int $expedienteId, int $orden, string $titulo, int $cantidad)
+    private function syncEntregableDesdeTabla7(int $expedienteId, int $orden, string $titulo, int $cantidad): void
     {
         $ent = ExpedienteEntregable::query()
             ->where('expediente_id', $expedienteId)
@@ -515,10 +488,8 @@ class ExpedienteSegundaParteController extends Controller
         }
     }
 
-    /**
-     * Seed automático: crea filas por bien en tablas 6/7/8 si no existen.
-     */
-    private function seedTablasPorBien(Expediente $expediente, string $programaLabel, string $subprogramaLabel, string $partidaLabel, array $mapNombresBien)
+    // ===== Seed filas por bien =====
+    private function seedTablasPorBien(Expediente $expediente, string $programaLabel, string $subprogramaLabel, string $partidaLabel, array $mapNombresBien): void
     {
         $bienes = array_values((array)($expediente->bienes ?? []));
         if (count($bienes) === 0) return;
@@ -615,8 +586,176 @@ class ExpedienteSegundaParteController extends Controller
         return trim(implode("\n", $out));
     }
 
+    // ===== EPS labels para portada =====
+    private function buildEpsLabels(Expediente $expediente): array
+    {
+        $expediente->loadMissing('detalle');
+        $detalle = $expediente->detalle;
+
+        $year = (int)$expediente->anio_ejercicio;
+        $entidad = (string)$expediente->entidad;
+
+        $eje = (string)$expediente->eje;
+        $programa = (string)$expediente->programa;
+        $subprograma = (string)$expediente->subprograma;
+
+        $nivel3 = FaspCatalogo::query()
+            ->where('year', $year)->where('entidad', $entidad)
+            ->where('nivel', 3)
+            ->where('eje', $eje)->where('programa', $programa)->where('subprograma', $subprograma)
+            ->with([
+                'parent:id,year,entidad,nivel,parent_id,eje,programa,nombre',
+                'parent.parent:id,year,entidad,nivel,eje,nombre'
+            ])->first();
+
+        $ejeNombre = $nivel3?->parent?->parent?->nombre ?? '';
+        $programaNombre = $nivel3?->parent?->nombre ?? '';
+        $subNombre = $nivel3?->nombre ?? '';
+
+        $ejeDefault = trim($eje).'. '.trim((string)$ejeNombre);
+        $progDefault = trim($programa).'. '.trim((string)$programaNombre);
+        $subDefault = trim($subprograma).'. '.trim((string)$subNombre);
+
+        $epsEje  = trim((string)($detalle->eje_override ?? ''))         !== '' ? $detalle->eje_override : $ejeDefault;
+        $epsProg = trim((string)($detalle->programa_override ?? ''))    !== '' ? $detalle->programa_override : $progDefault;
+        $epsSub  = trim((string)($detalle->subprograma_override ?? '')) !== '' ? $detalle->subprograma_override : $subDefault;
+
+        return [$epsEje, $epsProg, $epsSub];
+    }
+
+    public function pdf(Expediente $expediente)
+    {
+        $user = auth()->user();
+        abort_if($expediente->user_id !== $user->id, 403);
+
+        [$detalle, $t6, $t7, $t8] = $this->buildTablas678ParaPDF($expediente);
+        [$epsEje, $epsProg, $epsSub] = $this->buildEpsLabels($expediente);
+
+        $pdf = Pdf::loadView('expedientes.segunda_parte.pdf', compact(
+            'expediente','detalle','t6','t7','t8','epsEje','epsProg','epsSub'
+        ))->setPaper('letter')
+          ->setOptions([
+              'isPhpEnabled' => true,
+              'isRemoteEnabled' => true,
+              'chroot' => public_path(),       //para usar public_path('images/..')
+          ]);
+
+        return $pdf->stream("expediente_{$expediente->folio}.pdf");
+    }
+
+    private function buildTablas678ParaPDF(Expediente $expediente): array
+    {
+        $detalle = ExpedienteDetalle::query()->firstOrCreate(['expediente_id' => $expediente->id]);
+
+        $t6 = $expediente->estructuraProgramatica()->orderBy('orden')->get()->toArray();
+        $t7 = $expediente->especificaciones()->orderBy('orden')->get()->toArray();
+        $t8 = $expediente->entregables()->orderBy('orden')->get()->toArray();
+
+        foreach ($t7 as &$r) {
+            $raw = $r['descripcion_tecnica'] ?? '[]';
+            $r['descripcion_tecnica'] = is_array($raw) ? $raw : (json_decode((string)$raw, true) ?: []);
+        }
+        unset($r);
+
+        $mapT6 = [];
+        foreach ($t6 as $r) {
+            $ord = (int)($r['orden'] ?? 0);
+            if ($ord <= 0) continue;
+            $mapT6[$ord] = [
+                'cantidad' => $r['meta_cantidad'] ?? null,
+                'unidad_medida' => $r['unidad_medida'] ?? '',
+            ];
+        }
+
+        foreach ($t7 as &$r) {
+            $ord = (int)($r['orden'] ?? 0);
+            if ($ord > 0 && isset($mapT6[$ord])) {
+                $r['cantidad'] = $mapT6[$ord]['cantidad'] ?? 0;
+                $r['unidad_medida'] = $mapT6[$ord]['unidad_medida'] ?? '';
+            }
+        }
+        unset($r);
+
+        foreach ($t8 as &$r) {
+            $ord = (int)($r['orden'] ?? 0);
+            if ($ord > 0 && isset($mapT6[$ord])) {
+                $r['cantidad'] = $mapT6[$ord]['cantidad'] ?? 0;
+            }
+        }
+        unset($r);
+
+        return [$detalle, $t6, $t7, $t8];
+    }
+
+    // ===== Checklist + enviar =====
+    private function checklistSegundaParte(Expediente $expediente): array
+    {
+        $expediente->loadMissing(['detalle']);
+        $d = $expediente->detalle;
+
+        $t6Total = ExpedienteEstructuraProgramatica::where('expediente_id', $expediente->id)->count();
+        $t6OkCount = ExpedienteEstructuraProgramatica::where('expediente_id', $expediente->id)
+            ->whereNotNull('meta_cantidad')->count();
+        $okT6 = $t6Total > 0 && $t6OkCount === $t6Total;
+
+        $t7Total = ExpedienteEspecificacion::where('expediente_id', $expediente->id)->count();
+        $t7OkCount = ExpedienteEspecificacion::where('expediente_id', $expediente->id)
+            ->whereNotNull('precio_unitario')->count();
+        $okT7 = $t7Total > 0 && $t7OkCount === $t7Total;
+
+        $okT8 = trim((string)($d->tabla8_fecha_entrega ?? '')) !== ''
+            && trim((string)($d->tabla8_responsable_validar ?? '')) !== ''
+            && trim((string)($d->tabla8_lugar_entrega ?? '')) !== '';
+
+        $okFirmas = trim((string)($d->responsable_subprograma_nombre ?? '')) !== ''
+            && trim((string)($d->titular_dependencia_nombre ?? '')) !== '';
+
+        $ok = $okT6 && $okT7 && $okT8 && $okFirmas;
+
+        return [
+            'ok' => $ok,
+            'items' => [
+                ['label' => 'Tabla 6 (metas capturadas)', 'ok' => $okT6],
+                ['label' => 'Tabla 7 (precios unitarios capturados)', 'ok' => $okT7],
+                ['label' => 'Tabla 8 (fecha/responsable/lugar)', 'ok' => $okT8],
+                ['label' => 'Firmas (nombres mínimos)', 'ok' => $okFirmas],
+            ],
+        ];
+    }
+
     public function enviarRevision(Request $request, Expediente $expediente)
     {
-        abort(501, 'Pendiente por implementar (checklist + validación presupuesto).');
+        $user = auth()->user();
+        abort_if($expediente->user_id !== $user->id, 403);
+
+        if ($expediente->estatus === Expediente::ESTADO_APROBADO) {
+            return redirect()->route('expedientes.index')->with('error', 'Expediente aprobado: no editable.');
+        }
+
+        $check = $this->checklistSegundaParte($expediente);
+        if (!$check['ok']) {
+            return redirect()
+                ->route('expedientes.segunda.preview', $expediente->id)
+                ->with('error', 'Aún faltan campos por completar para enviar a revisión.');
+        }
+
+        $nuevo = defined(Expediente::class.'::ESTADO_EN_REVISION') ? Expediente::ESTADO_EN_REVISION : 'EN_REVISION';
+        $expediente->estatus = $nuevo;
+        $expediente->save();
+
+        return redirect()->route('expedientes.index')->with('success', 'Expediente enviado a revisión.');
     }
+
+    public function preview(Expediente $expediente)
+    {
+        $user = auth()->user();
+        abort_if($expediente->user_id !== $user->id, 403, 'No tienes permiso.');
+
+        $check = method_exists($this, 'checklistSegundaParte')
+            ? $this->checklistSegundaParte($expediente)
+            : ['ok' => false, 'items' => []];
+
+        return view('expedientes.segunda_parte.preview', compact('expediente', 'check'));
+    }
+
 }

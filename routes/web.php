@@ -133,6 +133,13 @@ Route::middleware(['auth', 'role:capturista'])->group(function () {
 
     Route::post('/expedientes/{expediente}/segunda-parte/enviar-revision', [ExpedienteSegundaParteController::class, 'enviarRevision'])
         ->name('expedientes.segunda.enviar');
+
+    // Visualizar el PDF completo 
+    Route::get('/expedientes/{expediente}/segunda/preview', [ExpedienteSegundaParteController::class, 'preview'])
+        ->name('expedientes.segunda.preview');
+
+    Route::get('/expedientes/{expediente}/segunda/pdf', [ExpedienteSegundaParteController::class, 'pdf'])
+        ->name('expedientes.segunda.pdf');
 });
 
 // =========================

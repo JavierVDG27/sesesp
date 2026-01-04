@@ -75,6 +75,8 @@
         'expedienteId' => $expediente->id,
         'csrf' => csrf_token(),
         'autosaveUrlBase' => $autosaveBase,
+        'previewUrl' => route('expedientes.segunda.preview', $expediente->id),
+        
         'initial' => [
             'step' => 1,
 
@@ -151,7 +153,6 @@
     document.addEventListener('alpine:init', () => {
         Alpine.data('expWizard', (payload) => ({
             step: payload.initial.step || 1,
-            previewOpen: false,
             saving: false,
             savedMsg: '',
             saveError: '',
@@ -445,6 +446,13 @@
                 await this.saveSection('seccion_17_21');
                 return true;
             },
+
+            async openPdfPreview() {
+                // Guarda todo antes de abrir el PDF (misma pestaña)
+                await this.saveAll();
+                window.location.href = payload.previewUrl;
+            },
+
         }));
     });
 </script>
@@ -467,13 +475,7 @@
                         ⤒ Ir al inicio
                     </button>
                 </div>
-
-                <button type="button"
-                        class="inline-flex items-center px-3 py-2 rounded-md border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                        @click="previewOpen = !previewOpen">
-                    <span x-text="previewOpen ? 'Ocultar vista previa' : 'Ver vista previa'"></span>
-                </button>
-            </div>
+</div>
 
             {{-- Header --}}
             <div class="flex items-start justify-between gap-4">
@@ -516,11 +518,11 @@
                 </div>
             </div>
 
-            {{-- Layout: formulario + preview --}}
-            <div class="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {{-- Layout: formulario --}}
+            <div class="mt-6">
 
                 {{-- FORM --}}
-                <div class="lg:col-span-8 space-y-6">
+                <div class="space-y-6">
 
                     {{-- Mensajes --}}
                     <template x-if="savedMsg">
@@ -1269,92 +1271,61 @@
 
                                 <button type="button"
                                         class="inline-flex items-center px-4 py-2 bg-[#691C32] text-white text-sm font-semibold rounded-md hover:bg-[#4e1324] disabled:opacity-50"
-                                        :disabled="saving"
+                                        :disabled="saving || step === steps.length"
                                         @click="next()">
                                     Siguiente →
                                 </button>
                             </div>
                         </div>
 
+                        {{-- ACCIONES FINALES: SOLO ÚLTIMO PASO --}}
+                        <div x-show="step === steps.length" style="display:none;"
+                             class="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                            <div class="flex flex-wrap items-center justify-between gap-2">
+                                <div class="text-sm text-gray-700">
+                                    <div class="font-semibold">Acciones finales</div>
+                                    <div class="text-xs text-gray-500">Se guardará todo antes de abrir la vista previa del PDF.</div>
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <button type="button"
+                                            class="inline-flex items-center px-3 py-2 rounded-md border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                                            :disabled="saving"
+                                            @click="saveAll().catch(()=>{})">
+                                        Guardar expediente (borrador)
+                                    </button>
+
+                                    <button type="button"
+                                            class="inline-flex items-center px-3 py-2 rounded-md bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
+                                            :disabled="saving"
+                                            @click="openPdfPreview().catch(()=>{})">
+                                        Vista previa PDF
+                                    </button>
+
+                                    <form method="POST" action="{{ route('expedientes.segunda.enviar', $expediente->id) }}" class="inline">
+                                        @csrf
+                                        <button type="submit"
+                                                class="inline-flex items-center px-3 py-2 rounded-md bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+                                                :disabled="saving">
+                                            Enviar a revisión
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <div class="mt-2 text-[11px] text-gray-500">
+                                Nota: después conectamos checklist + validación de presupuesto para habilitar/deshabilitar “Enviar a revisión”.
+                            </div>
+                        </div>
+
+
                         <p class="text-xs text-gray-500">
                             Tip: En el Paso 5 guarda por sub-tab (Tabla 6 / 7 / 8) antes de cambiar.
                         </p>
                     </div>
+</div>
 
-                {{-- PREVIEW --}}
-                <div class="lg:col-span-4" x-show="previewOpen" style="display:none;">
-                    <div class="sticky top-6">
-                        <div class="rounded-2xl border border-gray-200 bg-white shadow p-4">
-                            <div class="text-xs text-gray-500 mb-2">Vista previa (referencia del PDF)</div>
-
-                            <div class="border border-gray-300 rounded-lg p-4 bg-white"
-                                 style="font-family: 'Arial Narrow', Arial, sans-serif;">
-                                <div class="flex items-center justify-between">
-                                    <img :src="form.logo_url" alt="Logo" class="h-10 w-auto object-contain">
-                                </div>
-
-                                <div class="mt-4 font-bold uppercase text-center" style="font-size:34px;" x-text="form.titulo_documento"></div>
-                                <div class="text-center uppercase" style="font-size:20px;" x-text="form.subtitulo_documento"></div>
-
-                                <div class="mt-5" style="font-size:14px; font-weight:700;" x-text="form.partida_label"></div>
-                                <div class="mt-1" style="font-size:12px;" x-text="form.bienes_label"></div>
-
-                                <div class="mt-3 text-center" style="font-size:14px;" x-text="form.fasp_texto"></div>
-
-                                <div class="mt-3 text-center" style="font-size:14px;">
-                                    <span x-text="form.ejercicio_fiscal_label"></span>
-                                    <span class="font-semibold" x-text="anioFinal()"></span>
-                                </div>
-
-                                <div class="mt-4 text-right">
-                                    <div style="font-size:12px; font-weight:700;">Eje</div>
-                                    <div style="font-style:italic; font-size:11px;" x-text="epsEje()"></div>
-
-                                    <div class="mt-2" style="font-size:12px; font-weight:700;">Programa</div>
-                                    <div style="font-style:italic; font-size:11px;" x-text="epsProg()"></div>
-
-                                    <div class="mt-2" style="font-size:12px; font-weight:700;">Subprograma</div>
-                                    <div style="font-style:italic; font-size:11px;" x-text="epsSub()"></div>
-                                </div>
-
-                                <div class="mt-5" style="font-size:14px; font-weight:700;">5. Tablas</div>
-                                <div class="mt-1 text-gray-700" style="font-size:11px;">
-                                    <div class="font-semibold">Totales Tabla 7</div>
-                                    <div>Subtotal: <span class="font-mono" x-text="t7Subtotal().toLocaleString('es-MX', {style:'currency', currency:'MXN'})"></span></div>
-                                    <div>IVA: <span class="font-mono" x-text="t7IVA().toLocaleString('es-MX', {style:'currency', currency:'MXN'})"></span></div>
-                                    <div>Total: <span class="font-mono font-semibold" x-text="t7Total().toLocaleString('es-MX', {style:'currency', currency:'MXN'})"></span></div>
-                                </div>
-                            </div>
-
-                            <div class="mt-4 flex items-center justify-between gap-2">
-                                <button type="button"
-                                        class="inline-flex items-center px-3 py-2 rounded-md border border-gray-200 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-                                        :disabled="saving"
-                                        @click="saveAll().catch(()=>{})">
-                                    Guardar expediente (borrador)
-                                </button>
-
-                                <button type="button"
-                                        class="inline-flex items-center px-3 py-2 rounded-md bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700"
-                                        disabled>
-                                    Vista previa PDF
-                                </button>
-
-                                <button type="button"
-                                        class="inline-flex items-center px-3 py-2 rounded-md bg-green-600 text-white text-sm font-semibold hover:bg-green-700"
-                                        disabled>
-                                    Enviar a revisión
-                                </button>
-                            </div>
-
-                            <div class="mt-2 text-[11px] text-gray-500">
-                                PDF/Envío se habilitan cuando metamos checklist + validación presupuesto.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>{{-- grid --}}
+            </div>
         </div>
     </div>
 </div>
