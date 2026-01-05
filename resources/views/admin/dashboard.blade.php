@@ -17,12 +17,6 @@
 
             <nav class="mt-6 space-y-1">
 
-                {{-- Dashboard --}}
-                <a href="{{ route('admin.dashboard') }}"
-                   class="block px-6 py-3 hover:bg-[#9F2241]/40 transition">
-                    📊 Dashboard
-                </a>
-
                 {{-- Usuarios --}}
                 <a href="{{ route('admin.users.index') }}"
                    class="block px-6 py-3 hover:bg-[#9F2241]/40 transition">
@@ -41,10 +35,10 @@
                     📚 Catálogo FASP
                 </a>
 
-                {{-- Reportes --}}
-                <a href="#"
+                {{-- Validación Expedientes --}}
+                <a href="{{ route('revision.index') }}"
                    class="block px-6 py-3 hover:bg-[#9F2241]/40 transition">
-                    📑 Reportes
+                    📑 Validación Expedientes
                 </a>
 
                 {{-- Configuración --}}
@@ -109,14 +103,14 @@
                         <p class="text-gray-600 text-sm">Importa, consulta y valida la estructura por Eje/Programa.</p>
                     </a>
 
-                    {{-- Reportes --}}
-                    <div class="bg-[#9F2241]/10 hover:bg-[#9F2241]/20 p-6 rounded-xl shadow transition">
-                        <h4 class="font-semibold text-[#9F2241] text-lg mb-2">Reportes</h4>
-                        <p class="text-gray-600 text-sm">Accede a estadísticas y reportes generales.</p>
-                    </div>
+                    {{-- Validación Expedientes --}}
+                    <a href="{{ route('revision.index') }}"
+                    class="block bg-[#9F2241]/10 hover:bg-[#9F2241]/20 p-6 rounded-xl shadow transition">
+                        <h4 class="font-semibold text-[#9F2241] text-lg mb-2">Expedientes</h4>
+                        <p class="text-gray-600 text-sm">Valida Expedientes Técnicos</p>
+                    </a>
 
                 </div>
-
             </div>
         </main>
     </div>

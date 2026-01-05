@@ -23,7 +23,7 @@
                         <p class="text-gray-600 text-sm mb-3">
                             Consulta expedientes en estatus <b>En validación</b> y emite tu decisión.
                         </p>
-                        <a href="{{ route('validador.expedientes.index') }}"
+                        <a href="{{ route('revision.index') }}"
                            class="inline-flex items-center px-3 py-2 bg-[#691C32] text-white text-sm font-medium rounded-md hover:bg-[#4e1324] transition">
                             Ir a expedientes en validación →
                         </a>

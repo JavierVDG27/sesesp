@@ -102,6 +102,34 @@ Route::middleware(['auth', 'role:admin'])
         Route::post('/catalogo-fasp/recalcular', [FaspCatalogoController::class, 'recalcular'])->name('fasp.recalcular');
     });
 
+    // =========================
+    // ADMIN Y VALIDADOR DE EXPEDIENTES
+    // =========================
+    Route::middleware(['auth', 'role:admin,validador'])->prefix('revision')->name('revision.')->group(function () {
+    Route::get('/expedientes', [\App\Http\Controllers\Revision\ExpedienteRevisionController::class, 'index'])
+        ->name('index');
+
+    Route::get('/expedientes/{expediente}', [\App\Http\Controllers\Revision\ExpedienteRevisionController::class, 'show'])
+        ->name('show');
+
+    Route::post('/expedientes/{expediente}/aprobar', [\App\Http\Controllers\Revision\ExpedienteRevisionController::class, 'aprobar'])
+        ->name('aprobar');
+
+    Route::post('/expedientes/{expediente}/rechazar', [\App\Http\Controllers\Revision\ExpedienteRevisionController::class, 'rechazar'])
+        ->name('rechazar');
+});
+    // =========================
+    // VER EXPEDIENTES PDF COMPLETOS
+    // =========================
+
+    Route::middleware(['auth'])->group(function () {
+    Route::get('/expedientes/{expediente}/segunda/preview', [ExpedienteSegundaParteController::class, 'preview'])
+        ->name('expedientes.segunda.preview');
+
+    Route::get('/expedientes/{expediente}/segunda/pdf', [ExpedienteSegundaParteController::class, 'pdf'])
+        ->name('expedientes.segunda.pdf');
+});
+
 
 // =========================
 // CAPTURISTA
@@ -135,11 +163,6 @@ Route::middleware(['auth', 'role:capturista'])->group(function () {
         ->name('expedientes.segunda.enviar');
 
     // Visualizar el PDF completo 
-    Route::get('/expedientes/{expediente}/segunda/preview', [ExpedienteSegundaParteController::class, 'preview'])
-        ->name('expedientes.segunda.preview');
-
-    Route::get('/expedientes/{expediente}/segunda/pdf', [ExpedienteSegundaParteController::class, 'pdf'])
-        ->name('expedientes.segunda.pdf');
 });
 
 // =========================

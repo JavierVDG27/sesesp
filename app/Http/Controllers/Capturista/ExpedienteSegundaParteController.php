@@ -9,6 +9,7 @@ use App\Models\ExpedienteEstructuraProgramatica;
 use App\Models\ExpedienteEspecificacion;
 use App\Models\ExpedienteEntregable;
 use App\Models\FaspCatalogo;
+use App\Models\HistorialModificacion;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -530,8 +531,8 @@ class ExpedienteSegundaParteController extends Controller
                     'descripcion_tecnica' => json_encode([], JSON_UNESCAPED_UNICODE),
                     'cantidad' => 0,
                     'unidad_medida' => '',
-                    'precio_unitario' => null,
-                    'importe_sin_iva' => null,
+                    'precio_unitario' => 0,
+                    'importe_sin_iva' => 0,
                 ]
             );
 
@@ -626,7 +627,16 @@ class ExpedienteSegundaParteController extends Controller
     public function pdf(Expediente $expediente)
     {
         $user = auth()->user();
-        abort_if($expediente->user_id !== $user->id, 403);
+
+        $esDueno = (int)$expediente->user_id === (int)$user->id;
+        $esRevisor = in_array($user->role->name ?? '', ['admin','validador'], true);
+        $enFlujo = in_array($expediente->estatus, [
+            \App\Models\Expediente::ESTADO_EN_VALIDACION,
+            \App\Models\Expediente::ESTADO_APROBADO,
+            \App\Models\Expediente::ESTADO_RECHAZADO,
+        ], true);
+
+        abort_unless($esDueno || ($esRevisor && $enFlujo), 403);
 
         [$detalle, $t6, $t7, $t8] = $this->buildTablas678ParaPDF($expediente);
         [$epsEje, $epsProg, $epsSub] = $this->buildEpsLabels($expediente);
@@ -726,35 +736,69 @@ class ExpedienteSegundaParteController extends Controller
     public function enviarRevision(Request $request, Expediente $expediente)
     {
         $user = auth()->user();
-        abort_if($expediente->user_id !== $user->id, 403);
+        abort_if($expediente->user_id !== $user->id, 403, 'No tienes permiso para enviar este expediente.');
 
         if ($expediente->estatus === Expediente::ESTADO_APROBADO) {
-            return redirect()->route('expedientes.index')->with('error', 'Expediente aprobado: no editable.');
+            return redirect()->route('expedientes.index')->with('error', 'Expediente aprobado: no se puede reenviar.');
         }
 
+        //Checklist antes de enviar
         $check = $this->checklistSegundaParte($expediente);
         if (!$check['ok']) {
-            return redirect()
-                ->route('expedientes.segunda.preview', $expediente->id)
+            return redirect()->route('expedientes.segunda.preview', $expediente->id)
                 ->with('error', 'Aún faltan campos por completar para enviar a revisión.');
         }
 
-        $nuevo = defined(Expediente::class.'::ESTADO_EN_REVISION') ? Expediente::ESTADO_EN_REVISION : 'EN_REVISION';
-        $expediente->estatus = $nuevo;
+        $expediente->touch();
+        $expediente->refresh();
+
+        if (!$expediente->puedeEnviarValidacion()) {
+            return redirect()->route('expedientes.segunda.preview', $expediente->id)
+                ->with('error', 'No puedes reenviar: no hay cambios después del rechazo.');
+        }
+
+        $estadoAnterior = $expediente->estatus;
+
+        $expediente->estatus = Expediente::ESTADO_EN_VALIDACION;
         $expediente->save();
 
-        return redirect()->route('expedientes.index')->with('success', 'Expediente enviado a revisión.');
+        HistorialModificacion::create([
+            'expediente_id'   => $expediente->id,
+            'usuario_id'      => auth()->id(),
+            'estado_anterior' => $estadoAnterior,
+            'estado_nuevo'    => Expediente::ESTADO_EN_VALIDACION,
+            'observaciones'   => 'Enviado a validación (2da parte).',
+        ]);
+
+        return redirect()->route('expedientes.index')->with('success', 'Expediente enviado a validación.');
+    }
+
+    private function canViewForReview(Expediente $expediente): bool
+    {
+        $user = auth()->user();
+        $role = $user?->role?->name;
+
+        if ($role === 'capturista') {
+            return (int)$expediente->user_id === (int)$user->id;
+        }
+
+        if (in_array($role, ['admin','validador'], true)) {
+            // permitir ver si ya fue enviado a validación, o incluso siempre
+            return in_array($expediente->estatus, [
+                Expediente::ESTADO_EN_VALIDACION,
+                Expediente::ESTADO_APROBADO,
+                Expediente::ESTADO_RECHAZADO,
+            ], true);
+        }
+
+        return false;
     }
 
     public function preview(Expediente $expediente)
     {
-        $user = auth()->user();
-        abort_if($expediente->user_id !== $user->id, 403, 'No tienes permiso.');
+        abort_unless($this->canViewForReview($expediente), 403);
 
-        $check = method_exists($this, 'checklistSegundaParte')
-            ? $this->checklistSegundaParte($expediente)
-            : ['ok' => false, 'items' => []];
-
+        $check = $this->checklistSegundaParte($expediente);
         return view('expedientes.segunda_parte.preview', compact('expediente', 'check'));
     }
 

@@ -8,6 +8,47 @@
 
     <div class="py-12 bg-gray-50 min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+
+            {{-- Toast success --}}
+            @if (session('success'))
+                <div id="toast-success"
+                     class="fixed top-6 right-6 z-50 max-w-md rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-green-800 shadow-lg">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="font-semibold">Listo</div>
+                            <div class="text-sm">{{ session('success') }}</div>
+                        </div>
+                        <button type="button" class="text-green-800/60 hover:text-green-900"
+                                onclick="document.getElementById('toast-success')?.remove()">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                <script>
+                    setTimeout(() => document.getElementById('toast-success')?.remove(), 4500);
+                </script>
+            @endif
+
+            {{-- Toast error --}}
+            @if (session('error'))
+                <div id="toast-error"
+                     class="fixed top-6 right-6 z-50 max-w-md rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-800 shadow-lg">
+                    <div class="flex items-start justify-between gap-3">
+                        <div>
+                            <div class="font-semibold">Atención</div>
+                            <div class="text-sm">{{ session('error') }}</div>
+                        </div>
+                        <button type="button" class="text-red-800/60 hover:text-red-900"
+                                onclick="document.getElementById('toast-error')?.remove()">
+                            ✕
+                        </button>
+                    </div>
+                </div>
+                <script>
+                    setTimeout(() => document.getElementById('toast-error')?.remove(), 6000);
+                </script>
+            @endif
+
             <div class="bg-white overflow-hidden shadow-lg rounded-2xl p-6 md:p-8">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                     <div>
@@ -29,18 +70,6 @@
                         </a>
                     </div>
                 </div>
-
-                @if (session('success'))
-                    <div class="mb-4 px-4 py-3 rounded bg-green-100 text-green-800 text-sm">
-                        {{ session('success') }}
-                    </div>
-                @endif
-
-                @if (session('error'))
-                    <div class="mb-4 px-4 py-3 rounded bg-red-100 text-red-800 text-sm">
-                        {{ session('error') }}
-                    </div>
-                @endif
 
                 @if ($expedientes->isEmpty())
                     <div class="py-10 text-center text-gray-500 text-sm">
@@ -84,12 +113,11 @@
                                             ? trim(($area->siglas ? $area->siglas.' - ' : '').$area->nombre)
                                             : '—';
 
-                                        // Placeholder: cuando tengas lógica real, cámbialo por algo tipo:
-                                        // $segundaParteCompleta = (bool) $expediente->segunda_parte_completa;
-                                        $segundaParteCompleta = false;
+                                        // Bloquear acciones si está EN VALIDACIÓN o APROBADO
+                                        $bloqueado = in_array($estatus, ['en_validacion','en validacion','aprobado'], true);
 
-                                        // “Enviar a revisión” solo cuando 2 partes completas
-                                        $puedeEnviarRevision = $segundaParteCompleta && in_array($estatus, ['borrador','rechazado']);
+                                        // Ver PDF si está en validación o aprobado
+                                        $puedeVerPdf = in_array($estatus, ['en_validacion','en validacion','aprobado'], true);
                                     @endphp
 
                                     <tr class="hover:bg-gray-50 align-top">
@@ -144,6 +172,12 @@
                                                         Requiere corrección
                                                     </span>
                                                 @endif
+
+                                                @if($bloqueado && ($estatus === 'en_validacion' || $estatus === 'en validacion'))
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-yellow-600 text-white">
+                                                        En revisión
+                                                    </span>
+                                                @endif
                                             </div>
                                         </td>
 
@@ -154,47 +188,36 @@
                                         <td class="px-3 py-2 border">
                                             <div class="flex flex-col gap-2">
 
-                                                {{-- Editar (1ra parte / todo por ahora) --}}
-                                                <a href="{{ route('expedientes.edit', $expediente) }}"
-                                                   class="inline-flex items-center justify-center px-2 py-1 rounded-md
-                                                          bg-[#691C32] text-white text-[11px] hover:bg-[#4e1324] transition">
+                                                {{-- Editar (1ra parte) --}}
+                                                <a href="{{ $bloqueado ? '#' : route('expedientes.edit', $expediente) }}"
+                                                   class="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] transition
+                                                          {{ $bloqueado ? 'bg-gray-200 text-gray-500 cursor-not-allowed pointer-events-none' : 'bg-[#691C32] text-white hover:bg-[#4e1324]' }}">
                                                     Editar
                                                 </a>
 
-                                                {{-- Ir a 2da parte (por ahora ancla al edit) --}}
-                                                <a href="{{ route('expedientes.segunda.edit', $expediente) }}"
-                                                   class="inline-flex items-center justify-center px-2 py-1 rounded-md
-                                                          bg-[#9F2241] text-white text-[11px] hover:bg-[#691C32] transition">
+                                                {{-- Ir a 2da parte --}}
+                                                <a href="{{ $bloqueado ? '#' : route('expedientes.segunda.edit', $expediente) }}"
+                                                   class="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] transition
+                                                          {{ $bloqueado ? 'bg-gray-200 text-gray-500 cursor-not-allowed pointer-events-none' : 'bg-[#9F2241] text-white hover:bg-[#691C32]' }}">
                                                     Ir a 2da parte →
                                                 </a>
 
-                                                {{-- Enviar a revisión (bloqueado hasta que 2 partes completas) --}}
-                                                <button type="button"
-                                                        @disabled(!$puedeEnviarRevision)
-                                                        class="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] transition
-                                                            {{ $puedeEnviarRevision ? 'bg-yellow-600 text-white hover:bg-yellow-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed' }}">
-                                                    Enviar a revisión
-                                                </button>
-
-                                                {{-- PDF (solo para aprobados) - placeholder --}}
-                                                @if($estatus === 'aprobado')
-                                                    <button type="button"
-                                                            class="inline-flex items-center justify-center px-2 py-1 rounded-md
-                                                                   bg-green-600 text-white text-[11px] hover:bg-green-700 transition"
-                                                            title="Pendiente: ruta de descarga PDF">
+                                                {{-- Ver PDF (en validación o aprobado) --}}
+                                                @if($puedeVerPdf)
+                                                    <a href="{{ route('expedientes.segunda.pdf', $expediente->id) }}"
+                                                       target="_blank"
+                                                       class="inline-flex items-center justify-center px-2 py-1 rounded-md
+                                                              bg-blue-600 text-white text-[11px] hover:bg-blue-700 transition">
                                                         Ver PDF
-                                                    </button>
-                                                    {{-- Cuando tengas ruta:
-                                                    <a href="{{ route('expedientes.pdf', $expediente) }}" ...>Ver PDF</a>
-                                                    --}}
+                                                    </a>
                                                 @endif
 
                                                 {{-- Eliminar (modal) --}}
                                                 <button type="button"
-                                                        class="inline-flex items-center justify-center px-2 py-1 rounded-md
-                                                               bg-red-50 border border-red-200 text-red-700 text-[11px]
-                                                               hover:bg-red-100 transition"
-                                                        data-open-modal="delete-{{ $expediente->id }}">
+                                                        {{ $bloqueado ? 'disabled' : '' }}
+                                                        class="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] transition
+                                                               {{ $bloqueado ? 'bg-gray-100 border border-gray-200 text-gray-400 cursor-not-allowed' : 'bg-red-50 border border-red-200 text-red-700 hover:bg-red-100' }}"
+                                                        @if(!$bloqueado) data-open-modal="delete-{{ $expediente->id }}" @endif>
                                                     Eliminar
                                                 </button>
                                             </div>
