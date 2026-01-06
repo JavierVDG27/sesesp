@@ -26,9 +26,11 @@
                     {{-- Buscador --}}
                     <form method="GET" action="{{ route('revision.index') }}" class="flex items-center gap-2">
                         <input type="hidden" name="tab" value="{{ $tab ?? 'validacion' }}">
+
                         <input type="text" name="q" value="{{ $q ?? '' }}"
                                placeholder="Buscar: folio, proyecto, capturista, correo, institución..."
                                class="w-72 max-w-full rounded-md border-gray-300 focus:border-[#691C32] focus:ring-[#691C32]">
+
                         <button class="inline-flex items-center px-4 py-2 rounded-md bg-[#691C32] text-white text-sm font-semibold hover:bg-[#4e1324]">
                             Buscar
                         </button>
@@ -45,7 +47,12 @@
                 {{-- Tabs --}}
                 @php
                     $tab = $tab ?? 'validacion';
-                    $counts = $counts ?? ['validacion'=>0,'validados'=>0,'rechazados'=>0];
+                    $counts = $counts ?? [
+                        'validacion' => 0,
+                        'pendiente_firma' => 0,
+                        'firmados' => 0,
+                        'rechazados' => 0,
+                    ];
 
                     $tabBtn = function($key) use ($tab) {
                         return $tab === $key
@@ -63,11 +70,19 @@
                         </span>
                     </a>
 
-                    <a href="{{ route('revision.index', ['tab' => 'validados', 'q' => $q]) }}"
-                       class="inline-flex items-center px-3 py-2 rounded-md text-sm font-semibold {{ $tabBtn('validados') }}">
-                        Validados
+                    <a href="{{ route('revision.index', ['tab' => 'pendiente_firma', 'q' => $q]) }}"
+                       class="inline-flex items-center px-3 py-2 rounded-md text-sm font-semibold {{ $tabBtn('pendiente_firma') }}">
+                        Pendiente a firmar
                         <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-white/20">
-                            {{ $counts['validados'] ?? 0 }}
+                            {{ $counts['pendiente_firma'] ?? 0 }}
+                        </span>
+                    </a>
+
+                    <a href="{{ route('revision.index', ['tab' => 'firmados', 'q' => $q]) }}"
+                       class="inline-flex items-center px-3 py-2 rounded-md text-sm font-semibold {{ $tabBtn('firmados') }}">
+                        Firmados
+                        <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-white/20">
+                            {{ $counts['firmados'] ?? 0 }}
                         </span>
                     </a>
 
@@ -98,11 +113,12 @@
                         <tbody class="divide-y divide-gray-100">
                             @forelse($expedientes as $exp)
                                 @php
-                                    $estatus = strtolower($exp->estatus ?? '');
+                                    $estatus = strtolower((string)($exp->estatus ?? ''));
 
                                     $badge = match($estatus) {
                                         'en validacion', 'en_validacion' => ['bg-yellow-100 text-yellow-800', 'En validación'],
-                                        'aprobado' => ['bg-green-100 text-green-800', 'Aprobado'],
+                                        'pendiente_firma' => ['bg-indigo-100 text-indigo-800', 'Pendiente firma'],
+                                        'firmado' => ['bg-emerald-100 text-emerald-800', 'Firmado'],
                                         'rechazado' => ['bg-red-100 text-red-800', 'Rechazado'],
                                         default => ['bg-gray-100 text-gray-800', ucfirst($estatus)],
                                     };
@@ -116,10 +132,12 @@
                                         ? trim(($u->institucion->siglas ? $u->institucion->siglas.' - ' : '').($u->institucion->nombre ?? ''))
                                         : '—';
 
-                                    // Quien lo aprobó/rechazó (último movimiento relevante)
                                     $lastDecision = $exp->historiales
-                                        ? ($exp->historiales->firstWhere('estado_nuevo', \App\Models\Expediente::ESTADO_APROBADO)
-                                            ?? $exp->historiales->firstWhere('estado_nuevo', \App\Models\Expediente::ESTADO_RECHAZADO))
+                                        ? (
+                                            $exp->historiales->firstWhere('estado_nuevo', \App\Models\Expediente::ESTADO_FIRMADO)
+                                            ?? $exp->historiales->firstWhere('estado_nuevo', \App\Models\Expediente::ESTADO_PENDIENTE_FIRMA)
+                                            ?? $exp->historiales->firstWhere('estado_nuevo', \App\Models\Expediente::ESTADO_RECHAZADO)
+                                        )
                                         : null;
 
                                     $by = $lastDecision?->usuario;
@@ -156,20 +174,33 @@
                                     </td>
 
                                     <td class="px-4 py-3 text-xs text-gray-600">
-                                        @if($estatus === 'rechazado' && $lastDecision)
-                                            <div><span class="font-semibold">Rechazó:</span> {{ $byName ?? 'N/A' }}</div>
+                                        @if($lastDecision)
+                                            <div>
+                                                <span class="font-semibold">
+                                                    @if($lastDecision->estado_nuevo === \App\Models\Expediente::ESTADO_RECHAZADO)
+                                                        Rechazó:
+                                                    @elseif($lastDecision->estado_nuevo === \App\Models\Expediente::ESTADO_PENDIENTE_FIRMA)
+                                                        Validó:
+                                                    @elseif($lastDecision->estado_nuevo === \App\Models\Expediente::ESTADO_FIRMADO)
+                                                        Firmó/Cargó:
+                                                    @else
+                                                        Movió:
+                                                    @endif
+                                                </span>
+                                                {{ $byName ?? 'N/A' }}
+                                            </div>
+
                                             @if($by?->email)
                                                 <div class="text-gray-500">{{ $by->email }}</div>
                                             @endif
-                                            <div class="text-gray-500">{{ optional($lastDecision->created_at)->format('d/m/Y H:i') }}</div>
-                                        @elseif($estatus === 'aprobado' && $lastDecision)
-                                            <div><span class="font-semibold">Aprobó:</span> {{ $byName ?? 'N/A' }}</div>
-                                            @if($by?->email)
-                                                <div class="text-gray-500">{{ $by->email }}</div>
-                                            @endif
-                                            <div class="text-gray-500">{{ optional($lastDecision->created_at)->format('d/m/Y H:i') }}</div>
+
+                                            <div class="text-gray-500">
+                                                {{ optional($lastDecision->created_at)->format('d/m/Y H:i') }}
+                                            </div>
                                         @else
-                                            <div class="text-gray-500">{{ optional($exp->updated_at)->format('d/m/Y H:i') }}</div>
+                                            <div class="text-gray-500">
+                                                {{ optional($exp->updated_at)->format('d/m/Y H:i') }}
+                                            </div>
                                         @endif
                                     </td>
 

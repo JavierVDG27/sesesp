@@ -117,6 +117,20 @@ Route::middleware(['auth', 'role:admin'])
 
     Route::post('/expedientes/{expediente}/rechazar', [\App\Http\Controllers\Revision\ExpedienteRevisionController::class, 'rechazar'])
         ->name('rechazar');
+
+    //SUBIR EXPEDIENTE FIRMADO
+    Route::get('/expedientes/{expediente}/ver-firmado', [\App\Http\Controllers\Revision\ExpedienteFirmaController::class, 'view'])
+        ->name('expedientes.view_firmado');
+
+    Route::post('/expedientes/{expediente}/subir-firmado', [\App\Http\Controllers\Revision\ExpedienteFirmaController::class, 'upload'])
+        ->name('expedientes.upload_firmado');
+
+    Route::get('/expedientes/{expediente}/descargar-firmado', [\App\Http\Controllers\Revision\ExpedienteFirmaController::class, 'download'])
+        ->name('expedientes.download_firmado');
+
+    Route::delete('/expedientes/{expediente}/eliminar-firmado',[\App\Http\Controllers\Revision\ExpedienteFirmaController::class, 'destroy'])
+        ->name('expedientes.delete_firmado');
+
 });
     // =========================
     // VER EXPEDIENTES PDF COMPLETOS

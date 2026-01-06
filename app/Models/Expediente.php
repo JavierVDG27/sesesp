@@ -19,6 +19,9 @@ class Expediente extends Model
     public const ESTADO_APROBADO      = 'aprobado';
     public const ESTADO_RECHAZADO     = 'rechazado';
 
+    public const ESTADO_PENDIENTE_FIRMA = 'pendiente_firma';
+    public const ESTADO_FIRMADO         = 'firmado';
+
     protected $fillable = [
         'folio',
         'nombre_proyecto',
@@ -42,10 +45,16 @@ class Expediente extends Model
         'area_ejecutora',
 
         'bienes',
+
+        // ✅ PDF firmado
+        'pdf_firmado_path',
+        'pdf_firmado_usuario_id',
+        'pdf_firmado_at',
     ];
 
     protected $casts = [
         'bienes' => 'array',
+        'pdf_firmado_at' => 'datetime',
     ];
 
     // ===================== Relaciones =====================
@@ -65,7 +74,8 @@ class Expediente extends Model
         // Ordenados del más reciente al más viejo
         return $this->hasMany(HistorialModificacion::class)->latest();
     }
-        //Lista del area ejecutora para el expediente
+
+    //Lista del area ejecutora para el expediente
     public function areaEjecutora()
     {
         return $this->belongsTo(\App\Models\Institucion::class, 'area_ejecutora');
@@ -115,7 +125,6 @@ class Expediente extends Model
             ->value('observaciones');
     }
 
-
     public function fechaUltimoRechazo(): ?\Illuminate\Support\Carbon
     {
         return $this->historiales()
@@ -126,8 +135,6 @@ class Expediente extends Model
 
     /**
      * Permite enviar/re-enviar a validación solo si:
-     * - Está en borrador: siempre (asumiendo que pasa validaciones del form)
-     * - Está rechazado: SOLO si hubo cambios después del último rechazo
      */
     public function puedeEnviarValidacion(): bool
     {
@@ -149,7 +156,6 @@ class Expediente extends Model
         $obs = $this->ultimaObservacionRechazo();
         return $obs ? Str::limit($obs, $len) : null;
     }
-
 
     // ===================== Expediente segunda parte =====================
     public function detalle()

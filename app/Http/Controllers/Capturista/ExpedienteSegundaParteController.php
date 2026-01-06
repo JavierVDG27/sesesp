@@ -627,16 +627,35 @@ class ExpedienteSegundaParteController extends Controller
     public function pdf(Expediente $expediente)
     {
         $user = auth()->user();
+        abort_if(!$user, 403);
+
+        // ✅ Rol robusto: soporta role->name o role->nombre
+        $rol = mb_strtolower(trim((string)(
+            $user->role->name
+            ?? $user->role->nombre
+            ?? ''
+        )));
 
         $esDueno = (int)$expediente->user_id === (int)$user->id;
-        $esRevisor = in_array($user->role->name ?? '', ['admin','validador'], true);
-        $enFlujo = in_array($expediente->estatus, [
-            \App\Models\Expediente::ESTADO_EN_VALIDACION,
-            \App\Models\Expediente::ESTADO_APROBADO,
-            \App\Models\Expediente::ESTADO_RECHAZADO,
+        $esRevisor = in_array($rol, ['admin', 'validador'], true);
+
+        // ✅ Estatus robusto: soporta "en validacion" y "en_validacion", etc.
+        $estatus = mb_strtolower(trim((string)$expediente->estatus));
+        $estatus = str_replace('_', ' ', $estatus); // normaliza a espacios
+
+        // ✅ Flujo permitido a revisores
+        $enFlujo = in_array($estatus, [
+            'en validacion',
+            'aprobado',
+            'rechazado',
+            'pendiente firma',
+            'firmado',
         ], true);
 
-        abort_unless($esDueno || ($esRevisor && $enFlujo), 403);
+        // ✅ Permisos:
+        // - dueño siempre ve su PDF
+        // - revisor ve el PDF cuando ya está en flujo (validación / aprobado / rechazado / firma)
+        abort_unless($esDueno || ($esRevisor && $enFlujo), 403, 'Prohibido');
 
         [$detalle, $t6, $t7, $t8] = $this->buildTablas678ParaPDF($expediente);
         [$epsEje, $epsProg, $epsSub] = $this->buildEpsLabels($expediente);
@@ -644,14 +663,15 @@ class ExpedienteSegundaParteController extends Controller
         $pdf = Pdf::loadView('expedientes.segunda_parte.pdf', compact(
             'expediente','detalle','t6','t7','t8','epsEje','epsProg','epsSub'
         ))->setPaper('letter')
-          ->setOptions([
-              'isPhpEnabled' => true,
-              'isRemoteEnabled' => true,
-              'chroot' => public_path(),       //para usar public_path('images/..')
-          ]);
+        ->setOptions([
+            'isPhpEnabled' => true,
+            'isRemoteEnabled' => true,
+            'chroot' => public_path(),
+        ]);
 
         return $pdf->stream("expediente_{$expediente->folio}.pdf");
     }
+
 
     private function buildTablas678ParaPDF(Expediente $expediente): array
     {

@@ -97,15 +97,26 @@
                             <tbody>
                                 @foreach ($expedientes as $expediente)
                                     @php
-                                        $estatus = strtolower($expediente->estatus ?? 'borrador');
+                                        // Normalizamos a minúsculas para comparar
+                                        $estatusRaw = (string)($expediente->estatus ?? 'borrador');
+                                        $estatus = strtolower($estatusRaw);
 
-                                        $badge = match ($estatus) {
-                                            'borrador'       => ['bg-gray-100 text-gray-800', 'Borrador'],
-                                            'en_validacion'  => ['bg-yellow-100 text-yellow-800', 'En validación'],
-                                            'en validacion'  => ['bg-yellow-100 text-yellow-800', 'En validación'],
-                                            'aprobado'       => ['bg-green-100 text-green-800', 'Aprobado'],
-                                            'rechazado'      => ['bg-red-100 text-red-800', 'Rechazado'],
-                                            default          => ['bg-gray-100 text-gray-800', ucfirst($estatus)],
+                                        // Tus estados pueden venir con espacios o guiones, lo manejamos:
+                                        $esEnValidacion = in_array($estatus, ['en_validacion','en validacion'], true);
+                                        $esPendienteFirma = in_array($estatus, ['pendiente_firma','pendiente firma'], true);
+                                        $esFirmado = in_array($estatus, ['firmado'], true);
+                                        $esAprobado = in_array($estatus, ['aprobado'], true);
+                                        $esRechazado = in_array($estatus, ['rechazado'], true);
+                                        $esBorrador = in_array($estatus, ['borrador'], true);
+
+                                        $badge = match (true) {
+                                            $esBorrador => ['bg-gray-100 text-gray-800', 'Borrador'],
+                                            $esEnValidacion => ['bg-yellow-100 text-yellow-800', 'En validación'],
+                                            $esPendienteFirma => ['bg-purple-100 text-purple-800', 'Pendiente de firma'],
+                                            $esFirmado => ['bg-indigo-100 text-indigo-800', 'Firmado'],
+                                            $esAprobado => ['bg-green-100 text-green-800', 'Aprobado'],
+                                            $esRechazado => ['bg-red-100 text-red-800', 'Rechazado'],
+                                            default => ['bg-gray-100 text-gray-800', ucfirst($estatusRaw)],
                                         };
 
                                         $area = $expediente->areaEjecutora;
@@ -113,11 +124,14 @@
                                             ? trim(($area->siglas ? $area->siglas.' - ' : '').$area->nombre)
                                             : '—';
 
-                                        // Bloquear acciones si está EN VALIDACIÓN o APROBADO
-                                        $bloqueado = in_array($estatus, ['en_validacion','en validacion','aprobado'], true);
+                                        // ✅ Regla: si está en validación / pendiente firma / firmado / aprobado => NO se edita, solo ver PDF
+                                        $bloqueado = ($esEnValidacion || $esPendienteFirma || $esFirmado || $esAprobado);
 
-                                        // Ver PDF si está en validación o aprobado
-                                        $puedeVerPdf = in_array($estatus, ['en_validacion','en validacion','aprobado'], true);
+                                        // ✅ Ver PDF original en esos estados (y si quieres también en rechazado/borrador puedes dejarlo)
+                                        $puedeVerPdf = ($esEnValidacion || $esPendienteFirma || $esFirmado || $esAprobado);
+
+                                        // ✅ Solo se puede editar/continuar captura en borrador o rechazado
+                                        $puedeEditar = ($esBorrador || $esRechazado);
                                     @endphp
 
                                     <tr class="hover:bg-gray-50 align-top">
@@ -137,7 +151,7 @@
                                             </div>
 
                                             {{-- Si fue rechazado: mostrar última observación --}}
-                                            @if($estatus === 'rechazado' && method_exists($expediente, 'ultimaObservacionRechazoCorta'))
+                                            @if($esRechazado && method_exists($expediente, 'ultimaObservacionRechazoCorta'))
                                                 <div class="mt-2 rounded-md border border-red-200 bg-red-50 p-2 text-[11px] text-red-800">
                                                     <span class="font-semibold">Observación:</span>
                                                     {{ $expediente->ultimaObservacionRechazoCorta(160) ?? 'Sin observaciones registradas.' }}
@@ -167,15 +181,27 @@
                                                     {{ $badge[1] }}
                                                 </span>
 
-                                                @if($estatus === 'rechazado')
+                                                @if($esRechazado)
                                                     <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-red-600 text-white">
                                                         Requiere corrección
                                                     </span>
                                                 @endif
 
-                                                @if($bloqueado && ($estatus === 'en_validacion' || $estatus === 'en validacion'))
+                                                @if($esEnValidacion)
                                                     <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-yellow-600 text-white">
                                                         En revisión
+                                                    </span>
+                                                @endif
+
+                                                @if($esPendienteFirma)
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-purple-600 text-white">
+                                                        Pendiente de firma
+                                                    </span>
+                                                @endif
+
+                                                @if($esFirmado)
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-600 text-white">
+                                                        Firmado
                                                     </span>
                                                 @endif
                                             </div>
@@ -189,20 +215,20 @@
                                             <div class="flex flex-col gap-2">
 
                                                 {{-- Editar (1ra parte) --}}
-                                                <a href="{{ $bloqueado ? '#' : route('expedientes.edit', $expediente) }}"
+                                                <a href="{{ $puedeEditar ? route('expedientes.edit', $expediente) : '#' }}"
                                                    class="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] transition
-                                                          {{ $bloqueado ? 'bg-gray-200 text-gray-500 cursor-not-allowed pointer-events-none' : 'bg-[#691C32] text-white hover:bg-[#4e1324]' }}">
+                                                          {{ $puedeEditar ? 'bg-[#691C32] text-white hover:bg-[#4e1324]' : 'bg-gray-200 text-gray-500 cursor-not-allowed pointer-events-none' }}">
                                                     Editar
                                                 </a>
 
                                                 {{-- Ir a 2da parte --}}
-                                                <a href="{{ $bloqueado ? '#' : route('expedientes.segunda.edit', $expediente) }}"
+                                                <a href="{{ $puedeEditar ? route('expedientes.segunda.edit', $expediente) : '#' }}"
                                                    class="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] transition
-                                                          {{ $bloqueado ? 'bg-gray-200 text-gray-500 cursor-not-allowed pointer-events-none' : 'bg-[#9F2241] text-white hover:bg-[#691C32]' }}">
+                                                          {{ $puedeEditar ? 'bg-[#9F2241] text-white hover:bg-[#691C32]' : 'bg-gray-200 text-gray-500 cursor-not-allowed pointer-events-none' }}">
                                                     Ir a 2da parte →
                                                 </a>
 
-                                                {{-- Ver PDF (en validación o aprobado) --}}
+                                                {{-- Ver PDF original --}}
                                                 @if($puedeVerPdf)
                                                     <a href="{{ route('expedientes.segunda.pdf', $expediente->id) }}"
                                                        target="_blank"
@@ -212,7 +238,7 @@
                                                     </a>
                                                 @endif
 
-                                                {{-- Eliminar (modal) --}}
+                                                {{-- Eliminar (solo si NO está bloqueado) --}}
                                                 <button type="button"
                                                         {{ $bloqueado ? 'disabled' : '' }}
                                                         class="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] transition
