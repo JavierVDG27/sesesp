@@ -80,7 +80,6 @@ class DashboardController extends Controller
         }
 
         // 3) “En trabajo” = existe expediente para ese EPS (misma institución/año/entidad)
-        //    Nota: como tus expedientes se crean por Proyecto (PG), aquí con que exista 1 ya cuenta como “trabajado”
         $expedientesBase = Expediente::query()
             ->where('anio_ejercicio', $year)
             ->where('entidad', $entidad)

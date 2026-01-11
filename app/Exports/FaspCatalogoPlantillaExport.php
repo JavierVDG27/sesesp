@@ -37,9 +37,6 @@ class FaspCatalogoPlantillaExport implements FromCollection, WithEvents, WithTit
             ->orderByRaw('CAST(bien AS UNSIGNED), bien')
             ->get();
 
-        // OJO: aquí debes acomodar EXACTAMENTE las columnas como tu import las lee.
-        // Como no me pasaste todavía tu ImportSheets, dejo una estructura típica.
-        // Ajustas los keys/orden a tu plantilla real.
         return $rows->map(function ($r) {
             return [
                 'EJE' => $r->eje,
@@ -70,7 +67,6 @@ class FaspCatalogoPlantillaExport implements FromCollection, WithEvents, WithTit
                 $event->sheet->getDelegate()->insertNewRowBefore(1, 76);
 
                 // 2) Escribir encabezados EXACTOS en la fila 77 (A77 en adelante)
-                // Ajusta textos/orden exactamente como tu plantilla real.
                 $headers = [
                     'EJE','PROGRAMA','SUBPROGRAMA','CAPITULO','CONCEPTO','PARTIDA GENERICA','BIEN',
                     'NOMBRE',
@@ -84,7 +80,7 @@ class FaspCatalogoPlantillaExport implements FromCollection, WithEvents, WithTit
                     $col++;
                 }
 
-                // 3) Un poquito de formato para que se vea como plantilla
+                // 3) formato 
                 $event->sheet->getStyle('A77:O77')->getFont()->setBold(true);
                 $event->sheet->freezePane('A78');
                 $event->sheet->setAutoFilter('A77:O77');

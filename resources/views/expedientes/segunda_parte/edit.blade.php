@@ -119,7 +119,7 @@
             'tabla7' => $t7 ?? [],
             'tabla8' => $t8 ?? [],
 
-            // ✅ TABLA 8 globales (IMPORTANTE)
+            // TABLA 8 globales
             'tabla8_fecha_entrega' => $detalle->tabla8_fecha_entrega ?? '',
             'tabla8_responsable_validar' => $detalle->tabla8_responsable_validar ?? '',
             'tabla8_lugar_entrega' => $detalle->tabla8_lugar_entrega ?? '',
@@ -203,7 +203,7 @@
                 tabla7: Array.isArray(payload.initial.tabla7) ? payload.initial.tabla7 : [],
                 tabla8: Array.isArray(payload.initial.tabla8) ? payload.initial.tabla8 : [],
 
-                // ✅ tabla 8 globales
+                // tabla 8 globales
                 tabla8_fecha_entrega: payload.initial.tabla8_fecha_entrega || '',
                 tabla8_responsable_validar: payload.initial.tabla8_responsable_validar || '',
                 tabla8_lugar_entrega: payload.initial.tabla8_lugar_entrega || '',
@@ -616,28 +616,18 @@
                                             · Si lo dejas vacío, se usa el default.
                                         </p>
                                     </div>
-
-                                    <div>
-                                        <label class="block text-xs font-semibold text-gray-700 mb-1">Logo</label>
-                                        <div class="flex items-center gap-3">
-                                            <img :src="form.logo_url" alt="Logo" class="h-12 w-auto object-contain border rounded bg-white p-1">
-                                            <div class="text-[11px] text-gray-500">
-                                                Ruta: <code class="font-mono">public/images/LogoExpediente.png</code>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
 
                             <div class="rounded-xl border border-gray-200 p-5">
-                                <h4 class="font-semibold text-gray-800 mb-4">Estructura (override opcional)</h4>
+                                <h4 class="font-semibold text-gray-800 mb-4">Estructura (Modificar opcional)</h4>
 
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div>
                                         <div class="text-xs text-gray-500 mb-1">Eje (default)</div>
                                         <div class="text-sm italic text-gray-700" x-text="form.eje_default"></div>
                                         <input type="text" x-model="form.eje_override"
-                                               placeholder="Override (opcional)"
+                                               placeholder="Modificar (opcional)"
                                                class="mt-2 w-full rounded-md border-gray-300 focus:border-[#691C32] focus:ring-[#691C32]">
                                     </div>
 
@@ -645,7 +635,7 @@
                                         <div class="text-xs text-gray-500 mb-1">Programa (default)</div>
                                         <div class="text-sm italic text-gray-700" x-text="form.programa_default"></div>
                                         <input type="text" x-model="form.programa_override"
-                                               placeholder="Override (opcional)"
+                                               placeholder="Modificar (opcional)"
                                                class="mt-2 w-full rounded-md border-gray-300 focus:border-[#691C32] focus:ring-[#691C32]">
                                     </div>
 
@@ -653,7 +643,7 @@
                                         <div class="text-xs text-gray-500 mb-1">Subprograma (default)</div>
                                         <div class="text-sm italic text-gray-700" x-text="form.subprograma_default"></div>
                                         <input type="text" x-model="form.subprograma_override"
-                                               placeholder="Override (opcional)"
+                                               placeholder="Modificar (opcional)"
                                                class="mt-2 w-full rounded-md border-gray-300 focus:border-[#691C32] focus:ring-[#691C32]">
                                     </div>
                                 </div>
@@ -1041,74 +1031,106 @@
                                 </div>
 
                                 {{-- Campos globales grandes (COMO secciones 9–20) --}}
-                                <div class="mt-5 space-y-4">
+                                <div class="mt-6 space-y-5">
 
                                     {{-- Fecha de Entrega --}}
-                                    <div class="border border-gray-200 rounded-xl p-4 bg-gray-50">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center font-bold text-[#691C32]">
-                                                1
+                                    <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                                        <div class="p-4 sm:p-5 border-b border-gray-100 bg-gray-50/70 rounded-t-2xl">
+                                            <div class="flex items-start gap-3">
+                                                <div class="w-11 h-11 rounded-2xl bg-white border border-gray-200 flex items-center justify-center font-extrabold text-[#691C32] shrink-0">
+                                                    1
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <div class="font-extrabold text-gray-900">Fecha de Entrega (texto)</div>
+                                                    <div class="text-xs text-gray-500 mt-0.5">Describe claramente el plazo, horarios y condiciones de entrega.</div>
+                                                </div>
                                             </div>
-                                            <div class="font-semibold text-gray-800">Fecha de Entrega (texto)</div>
                                         </div>
 
-                                        <div class="mt-3">
+                                        <div class="p-4 sm:p-5">
                                             <textarea
                                                 x-model="form.tabla8_fecha_entrega"
-                                                rows="3"
-                                                class="w-full rounded-md border-gray-300 focus:border-[#691C32] focus:ring-[#691C32] resize-y"
+                                                rows="2"
+                                                class="w-full min-h-[4.5rem] rounded-xl border-gray-300 bg-white text-sm sm:text-base text-gray-900 placeholder:text-gray-400
+                                                    focus:border-[#691C32] focus:ring-[#691C32] resize-none leading-relaxed"
                                                 placeholder="Ej. Dentro de los 30 días hábiles a partir de la firma del contrato, en un horario de 09:00 a 15:00 horas"
                                                 @input="autoGrow($event.target)"
                                                 x-init="autoGrow($el)"
                                             ></textarea>
+                                            <div class="mt-2 text-[11px] text-gray-500">
+                                                Se ajusta automáticamente al contenido.
+                                            </div>
                                         </div>
                                     </div>
 
                                     {{-- Responsable --}}
-                                    <div class="border border-gray-200 rounded-xl p-4 bg-gray-50">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center font-bold text-[#691C32]">
-                                                2
+                                    <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                                        <div class="p-4 sm:p-5 border-b border-gray-100 bg-gray-50/70 rounded-t-2xl">
+                                            <div class="flex items-start gap-3">
+                                                <div class="w-11 h-11 rounded-2xl bg-white border border-gray-200 flex items-center justify-center font-extrabold text-[#691C32] shrink-0">
+                                                    2
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <div class="font-extrabold text-gray-900">Responsable de Validar el Entregable (texto)</div>
+                                                    <div class="text-xs text-gray-500 mt-0.5">Indica el cargo/área responsable de validar.</div>
+                                                </div>
                                             </div>
-                                            <div class="font-semibold text-gray-800">Responsable de Validar el Entregable (texto)</div>
                                         </div>
 
-                                        <div class="mt-3">
+                                        <div class="p-4 sm:p-5">
                                             <textarea
                                                 x-model="form.tabla8_responsable_validar"
-                                                rows="3"
-                                                class="w-full rounded-md border-gray-300 focus:border-[#691C32] focus:ring-[#691C32] resize-y"
+                                                rows="2"
+                                                class="w-full min-h-[4.5rem] rounded-xl border-gray-300 bg-white text-sm sm:text-base text-gray-900 placeholder:text-gray-400
+                                                    focus:border-[#691C32] focus:ring-[#691C32] resize-none leading-relaxed"
                                                 placeholder="Ej. Jefe de la Unidad... / Coordinador General..."
                                                 @input="autoGrow($event.target)"
                                                 x-init="autoGrow($el)"
                                             ></textarea>
+                                            <div class="mt-2 text-[11px] text-gray-500">
+                                                Se ajusta automáticamente al contenido.
+                                            </div>
                                         </div>
                                     </div>
 
                                     {{-- Lugar --}}
-                                    <div class="border border-gray-200 rounded-xl p-4 bg-gray-50">
-                                        <div class="flex items-center gap-3">
-                                            <div class="w-10 h-10 rounded-lg bg-white border border-gray-200 flex items-center justify-center font-bold text-[#691C32]">
-                                                3
+                                    <div class="rounded-2xl border border-gray-200 bg-white shadow-sm">
+                                        <div class="p-4 sm:p-5 border-b border-gray-100 bg-gray-50/70 rounded-t-2xl">
+                                            <div class="flex items-start gap-3">
+                                                <div class="w-11 h-11 rounded-2xl bg-white border border-gray-200 flex items-center justify-center font-extrabold text-[#691C32] shrink-0">
+                                                    3
+                                                </div>
+                                                <div class="min-w-0">
+                                                    <div class="font-extrabold text-gray-900">Lugar de Entrega (texto)</div>
+                                                    <div class="text-xs text-gray-500 mt-0.5">Especifica el domicilio o ubicación de entrega.</div>
+                                                </div>
                                             </div>
-                                            <div class="font-semibold text-gray-800">Lugar de Entrega (texto)</div>
                                         </div>
 
-                                        <div class="mt-3">
+                                        <div class="p-4 sm:p-5">
                                             <textarea
                                                 x-model="form.tabla8_lugar_entrega"
-                                                rows="3"
-                                                class="w-full rounded-md border-gray-300 focus:border-[#691C32] focus:ring-[#691C32] resize-y"
+                                                rows="2"
+                                                class="w-full min-h-[4.5rem] rounded-xl border-gray-300 bg-white text-sm sm:text-base text-gray-900 placeholder:text-gray-400
+                                                    focus:border-[#691C32] focus:ring-[#691C32] resize-none leading-relaxed"
                                                 placeholder="Ej. Oficinas centrales de la XXX"
                                                 @input="autoGrow($event.target)"
                                                 x-init="autoGrow($el)"
                                             ></textarea>
+                                            <div class="mt-2 text-[11px] text-gray-500">
+                                                Se ajusta automáticamente al contenido.
+                                            </div>
                                         </div>
                                     </div>
-                                    <p class="text-xs text-gray-500">
-                                        * Estos 3 campos se imprimen una sola vez en el PDF y se “extienden” como en el formato oficial.
-                                    </p>
+
+                                    <div class="rounded-2xl border border-gray-200 bg-gray-50 p-4 sm:p-5">
+                                        <p class="text-sm text-gray-700">
+                                            <span class="font-extrabold text-[#691C32]">*</span>
+                                            Estos 3 campos se imprimen una sola vez en el PDF y se “extienden” como en el formato oficial.
+                                        </p>
+                                    </div>
                                 </div>
+
                             </div>
                         </section>
 

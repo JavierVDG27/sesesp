@@ -44,7 +44,7 @@ class ExpedienteRevisionController extends Controller
                 $query->where('estatus', Expediente::ESTADO_RECHAZADO);
                 break;
 
-            case 'validados': // compat antiguos "aprobado"
+            case 'validados': // antiguos "aprobado"
                 $query->where('estatus', Expediente::ESTADO_APROBADO);
                 break;
 
@@ -86,7 +86,6 @@ class ExpedienteRevisionController extends Controller
             'firmados'         => Expediente::where('estatus', Expediente::ESTADO_FIRMADO)->count(),
             'rechazados'       => Expediente::where('estatus', Expediente::ESTADO_RECHAZADO)->count(),
 
-            // compat por si tienes
             'validados'        => Expediente::where('estatus', Expediente::ESTADO_APROBADO)->count(),
         ];
 

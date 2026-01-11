@@ -87,7 +87,7 @@ class ExpedienteFirmaController extends Controller
 
     public function destroy(Expediente $expediente)
     {
-        // Solo admin/validador (middleware ya lo restringe)
+        // Solo admin/validador
         abort_if($expediente->estatus !== Expediente::ESTADO_FIRMADO, 422);
         abort_if(empty($expediente->pdf_firmado_path), 404);
 

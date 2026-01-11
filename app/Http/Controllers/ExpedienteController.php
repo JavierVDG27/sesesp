@@ -95,7 +95,7 @@ class ExpedienteController extends Controller
                     foreach ($asig as $a) {
                         $w->orWhere(function ($q) use ($a) {
                             $q->where('eje', $a->eje)
-                            ->where('programa', $a->programa)      // si tu asignación sí trae programa, perfecto
+                            ->where('programa', $a->programa)
                             ->where('subprograma', $a->subprograma);
                         });
                     }
@@ -369,7 +369,6 @@ class ExpedienteController extends Controller
     {
         $user = auth()->user();
 
-        // Seguridad: por ahora solo el dueño edita (luego lo abrimos a institución si quieres)
         abort_if($expediente->user_id !== $user->id, 403, 'No tienes permiso para editar este expediente.');
 
         // Bloqueo por estatus
@@ -378,11 +377,6 @@ class ExpedienteController extends Controller
                 ->route('expedientes.index')
                 ->with('error', 'Este expediente está aprobado y no puede editarse.');
         }
-
-        // Si quieres bloquear también cuando está en validación (recomendado), descomenta:
-        // if ($expediente->estatus === Expediente::ESTADO_EN_VALIDACION) {
-        //     return redirect()->route('expedientes.index')->with('error', 'Este expediente está en validación y no puede editarse.');
-        // }
 
         $year = (int)($expediente->anio_ejercicio ?? now()->year);
         $entidad = (string)($expediente->entidad ?? '8300');
@@ -625,7 +619,6 @@ class ExpedienteController extends Controller
                 'area_ejecutora',
             ])->toArray();
 
-            // Nota: dependencia ya no se usa (debe ser nullable en DB)
             $expediente->update($data);
 
             // bienes (json)
@@ -692,7 +685,6 @@ class ExpedienteController extends Controller
 
     public function listaEnValidacion()
     {
-        // Ajusta a tu vista/rol de validador
         $expedientes = Expediente::where('estatus', Expediente::ESTADO_EN_VALIDACION)
             ->with(['usuario', 'historiales.usuario'])
             ->latest()

@@ -46,7 +46,7 @@ class Expediente extends Model
 
         'bienes',
 
-        // ✅ PDF firmado
+        // PDF firmado
         'pdf_firmado_path',
         'pdf_firmado_usuario_id',
         'pdf_firmado_at',

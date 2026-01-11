@@ -150,7 +150,7 @@ class ExpedienteSegundaParteController extends Controller
         $t7 = $expediente->especificaciones()->get()->toArray();
         $t8 = $expediente->entregables()->get()->toArray();
 
-        // FIX A: decodificar descripcion_tecnica para que el blade recargue bien
+        // decodificar descripcion_tecnica para que el blade recargue bien
         foreach ($t7 as &$r) {
             $raw = $r['descripcion_tecnica'] ?? '[]';
             if (!is_array($raw)) {
@@ -159,7 +159,7 @@ class ExpedienteSegundaParteController extends Controller
         }
         unset($r);
 
-        // FIX B: asegurar Cantidad/Unidad desde Tabla 6 hacia Tabla 7/8
+        // asegurar Cantidad/Unidad desde Tabla 6 hacia Tabla 7/8
         $mapT6 = [];
         foreach ($t6 as $r) {
             $ord = (int)($r['orden'] ?? 0);
@@ -629,7 +629,6 @@ class ExpedienteSegundaParteController extends Controller
         $user = auth()->user();
         abort_if(!$user, 403);
 
-        // ✅ Rol robusto: soporta role->name o role->nombre
         $rol = mb_strtolower(trim((string)(
             $user->role->name
             ?? $user->role->nombre
@@ -639,11 +638,11 @@ class ExpedienteSegundaParteController extends Controller
         $esDueno = (int)$expediente->user_id === (int)$user->id;
         $esRevisor = in_array($rol, ['admin', 'validador'], true);
 
-        // ✅ Estatus robusto: soporta "en validacion" y "en_validacion", etc.
+        // Estatus "en validacion" y "en_validacion", etc.
         $estatus = mb_strtolower(trim((string)$expediente->estatus));
         $estatus = str_replace('_', ' ', $estatus); // normaliza a espacios
 
-        // ✅ Flujo permitido a revisores
+        // Flujo permitido a revisores
         $enFlujo = in_array($estatus, [
             'en validacion',
             'aprobado',
@@ -652,7 +651,7 @@ class ExpedienteSegundaParteController extends Controller
             'firmado',
         ], true);
 
-        // ✅ Permisos:
+        //Permisos:
         // - dueño siempre ve su PDF
         // - revisor ve el PDF cuando ya está en flujo (validación / aprobado / rechazado / firma)
         abort_unless($esDueno || ($esRevisor && $enFlujo), 403, 'Prohibido');

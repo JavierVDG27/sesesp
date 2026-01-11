@@ -1033,7 +1033,7 @@
     });
     </script>
 
-    {{-- Recomendado para evitar parpadeo en Alpine --}}
+    {{-- evitar parpadeo en Alpine --}}
     <style>
         [x-cloak] { display: none !important; }
     </style>

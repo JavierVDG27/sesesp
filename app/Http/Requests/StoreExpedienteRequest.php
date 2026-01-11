@@ -29,7 +29,7 @@ class StoreExpedienteRequest extends FormRequest
             'dependencia'     => ['required','string','max:255'],
             'tema'            => ['nullable','string','max:255'],
 
-            // Clasificador (obligatorio en tu flujo)
+            // Clasificador
             'capitulo'          => ['required','string','max:10'],
             'concepto'          => ['required','string','max:10'],
             'partida_generica'  => ['required','string','max:10'],

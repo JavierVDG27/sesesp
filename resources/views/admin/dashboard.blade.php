@@ -50,7 +50,7 @@
                         </button>
                     </div>
 
-                    {{-- Mini perfil (reemplazo de “Sesión activa”) --}}
+                    {{-- Mini perfil --}}
                     <div class="mt-5 flex items-center gap-3">
                         <div class="h-11 w-11 rounded-2xl bg-white/10 border border-white/10 flex items-center justify-center">
                             <i class="fas fa-user-shield"></i>

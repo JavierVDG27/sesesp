@@ -327,7 +327,7 @@
     </div>
 
     <script>
-        // Drag-to-scroll horizontal para la tabla (mouse/touchpad) tipo "pantalla táctil"
+        // Drag-to-scroll horizontal para la tabla (mouse/touchpad)
         (function () {
             const el = document.getElementById('dragScrollTableInstituciones');
             if (!el) return;

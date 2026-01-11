@@ -28,8 +28,8 @@ class InstitucionController extends Controller
             'siglas' => 'nullable|string|max:50',
         ]);
 
-        $max = (int) Institucion::max('orden'); // si todo está 0, max=0
-        $orden = $max + 1;                     // siempre 1..N
+        $max = (int) Institucion::max('orden');
+        $orden = $max + 1;
 
         Institucion::create([
             'nombre' => $request->nombre,
@@ -103,7 +103,7 @@ class InstitucionController extends Controller
 
         DB::transaction(function () use ($ids) {
 
-            // Temporal grande para evitar choques con unique(orden)
+            // Temporal para evitar choques con unique(orden)
             $max = (int) DB::table('instituciones')->max('orden');
             $tempBase = $max + 1000;
 

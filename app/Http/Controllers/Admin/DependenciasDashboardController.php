@@ -60,7 +60,7 @@ class DependenciasDashboardController extends Controller
         $user = User::findOrFail($data['user_id']);
         $sub = Subdependencia::findOrFail($data['subdependencia_id']);
 
-        // Opcional pero recomendado: asegurar que usuario e institución coincidan
+        // asegurar que usuario e institución coincidan
         if ((int)$user->institucion_id !== (int)$sub->institucion_id) {
             return back()->with('error', 'La subdependencia no pertenece a la institución del usuario.');
         }

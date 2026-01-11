@@ -11,7 +11,6 @@ class DashboardController extends Controller
     {
         $year = request('year', now()->year);
 
-        // Mientras no tengas datos, esto evita errores
         $rows = FaspCatalogo::where('year', $year)
             ->where('entidad', '8300')
             ->orderBy('eje')

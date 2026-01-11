@@ -59,7 +59,7 @@ class FaspCatalogoController extends Controller
         // 2) Summary total del año (raíces nivel 1)
         // ======================
         $summary = [
-            'count' => (clone $q)->count(), // o FaspCatalogo::where(...)->count()
+            'count' => (clone $q)->count(),
             'total_fed_federal' => (float) FaspCatalogo::where('year',$year)->where('entidad',$entidad)->where('nivel',1)->sum('fed_federal'),
             'total_fed_municipal' => (float) FaspCatalogo::where('year',$year)->where('entidad',$entidad)->where('nivel',1)->sum('fed_municipal'),
             'total_est_estatal' => (float) FaspCatalogo::where('year',$year)->where('entidad',$entidad)->where('nivel',1)->sum('est_estatal'),
@@ -161,7 +161,7 @@ class FaspCatalogoController extends Controller
 
         DB::transaction(function () use ($request, $year, $entidad, $tree, $rollup) {
 
-            // ✅ Desactivar asignaciones relacionadas (para que NO "revivan" al reimportar)
+            // Desactivar asignaciones relacionadas
             FaspAsignacionInstitucion::where('year', $year)
                 ->where('entidad', $entidad)
                 ->update(['active' => false]);
@@ -197,7 +197,7 @@ class FaspCatalogoController extends Controller
 
         DB::transaction(function () use ($year, $entidad) {
 
-            // ✅ Desactivar asignaciones del año/entidad
+            // Desactivar asignaciones del año/entidad
             FaspAsignacionInstitucion::where('year', $year)
                 ->where('entidad', $entidad)
                 ->update(['active' => false]);
@@ -270,14 +270,12 @@ class FaspCatalogoController extends Controller
             return back()->withErrors(['No se puede agregar hijo a un nivel BIEN (7).']);
         }
 
-        // normaliza el código (ej: eje/programa 2 dígitos; bien/partida/concepto/capitulo sin pad)
         $childCode = trim($data['child_codigo']);
         if (in_array($childNivel, [2,3], true)) {
             $childCode = str_pad((string)(int)$childCode, 2, '0', STR_PAD_LEFT);
         } elseif ($childNivel === 1) {
             $childCode = str_pad((string)(int)$childCode, 2, '0', STR_PAD_LEFT);
         } else {
-            // capitulo/concepto/partida/bien: solo limpia
             $childCode = preg_replace('/\s+/', '', $childCode);
         }
 
@@ -404,7 +402,6 @@ class FaspCatalogoController extends Controller
 
     private function descendantIds(int $id): array
     {
-        // Simple: usa parent_id para encontrar descendientes (requiere que rebuildParents ya exista)
         $all = FaspCatalogo::select('id','parent_id')->get();
         $children = [];
         foreach ($all as $r) {
@@ -424,20 +421,19 @@ class FaspCatalogoController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $year = (int) $request->input('year', date('Y'));
-        $entidad = (string) ($request->input('entidad', '8300')); // si manejas entidad fija, déjalo así
+        $entidad = (string) ($request->input('entidad', '8300'));
 
         $q = FaspCatalogo::query()
             ->where('year', $year)
             ->where('entidad', $entidad);
 
-        // mismos filtros que tu index (si vienen)
         foreach (['eje','programa','subprograma','capitulo','concepto','partida_generica','bien'] as $f) {
             if ($request->filled($f)) {
                 $q->where($f, (string)$request->input($f));
             }
         }
 
-        // orden “natural” por jerarquía
+        // orden por jerarquía
         $q->orderBy('nivel')
         ->orderBy('eje')
         ->orderBy('programa')
