@@ -1,97 +1,161 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-white leading-tight">
-            Instituciones
-        </h2>
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <div>
+                <h2 class="font-semibold text-2xl text-white leading-tight">
+                    Instituciones
+                </h2>
+                <p class="text-white/80 text-sm mt-1">
+                    Reordena, edita y administra el catálogo institucional.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('admin.dependencias.index') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/20 bg-white/10 text-white hover:bg-white/15 transition">
+                    <i class="fas fa-arrow-left"></i>
+                    Regresar
+                </a>
+
+                <a href="{{ route('admin.instituciones.create') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-[#9F2241] font-semibold shadow-sm hover:bg-gray-50 transition">
+                    <i class="fas fa-plus"></i>
+                    Nueva institución
+                </a>
+            </div>
+        </div>
     </x-slot>
 
-    <div class="py-10 bg-gray-50 min-h-screen">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-10">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             @if(session('success'))
-                <div class="mb-6 p-4 bg-green-100 text-green-800 border border-green-200 rounded-xl">
-                    {{ session('success') }}
+                <div class="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5 text-green-700">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="text-green-800 text-sm">
+                            <p class="font-semibold">Operación realizada</p>
+                            <p class="mt-0.5">{{ session('success') }}</p>
+                        </div>
+                    </div>
                 </div>
             @endif
 
             @if(session('error'))
-                <div class="mb-6 p-4 bg-red-100 text-red-800 border border-red-200 rounded-xl">
-                    {{ session('error') }}
+                <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5 text-red-700">
+                            <i class="fas fa-triangle-exclamation"></i>
+                        </div>
+                        <div class="text-red-800 text-sm">
+                            <p class="font-semibold">No se pudo completar</p>
+                            <p class="mt-0.5">{{ session('error') }}</p>
+                        </div>
+                    </div>
                 </div>
             @endif
 
-            <div class="bg-white shadow-lg rounded-2xl p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <a href="{{ route('admin.dependencias.index') }}"
-                       class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
-                        ← Regresar a Dependencias
-                    </a>
+            {{-- Card principal --}}
+            <div class="bg-white shadow-sm rounded-2xl border border-gray-200 overflow-hidden">
 
-                    <div>
-                        <h1 class="text-2xl text-center font-bold text-[#691C32]">Gestión de Instituciones</h1>
-                        <p class="text-gray-600 text-sm">Alta, edición y administración de instituciones.</p>
+                <div class="px-6 py-5 border-b border-gray-100">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div class="flex items-start gap-3">
+                            <div class="h-10 w-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center text-[#9F2241]">
+                                <i class="fas fa-building-columns"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-lg font-semibold text-gray-800">Gestión de Instituciones</h1>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    Usa ↑/↓ para acomodar y después guarda el orden.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2">
+                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-[#9F2241]/10 text-[#9F2241] border border-[#9F2241]/10">
+                                <i class="fas fa-sort"></i>
+                                Orden por prioridad
+                            </span>
+                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-gray-50 text-gray-700 border border-gray-200">
+                                <i class="fas fa-circle-info text-gray-400"></i>
+                                Arrastra con ↑/↓
+                            </span>
+                        </div>
                     </div>
-
-                    <a href="{{ route('admin.instituciones.create') }}"
-                       class="px-4 py-2 rounded-lg bg-[#9F2241] text-white font-semibold shadow hover:bg-[#691C32] transition">
-                        + Nueva institución
-                    </a>
                 </div>
 
                 {{-- FORM BATCH (NO anidar forms dentro del tbody) --}}
                 <form method="POST" action="{{ route('admin.instituciones.orden.batch') }}" id="ordenForm">
                     @csrf
 
-                    <div class="overflow-x-auto bg-white rounded-xl border border-gray-200">
+                    <div class="overflow-x-auto">
                         <table class="w-full text-left">
-                            <thead>
-                                <tr class="bg-[#9F2241]/10 text-[#691C32] font-semibold">
-                                    <th class="py-3 px-4 w-40">Reordenar</th>
+                            <thead class="bg-gray-50">
+                                <tr class="text-gray-700 font-semibold">
+                                    <th class="py-3 px-4 w-44">Orden</th>
                                     <th class="py-3 px-4">Nombre</th>
                                     <th class="py-3 px-4">Siglas</th>
                                     <th class="py-3 px-4">Acciones</th>
                                 </tr>
                             </thead>
 
-                            <tbody id="instTbody">
+                            <tbody id="instTbody" class="divide-y divide-gray-100">
                                 @forelse($instituciones as $inst)
-                                    <tr class="border-t" data-id="{{ $inst->id }}">
+                                    <tr class="hover:bg-gray-50 transition" data-id="{{ $inst->id }}">
                                         {{-- REORDENAR (↑ ↓) + ids[] --}}
                                         <td class="py-3 px-4">
                                             <div class="flex items-center gap-2">
                                                 <button type="button"
-                                                        class="move-up px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
-                                                        title="Subir">↑</button>
+                                                        class="move-up inline-flex items-center justify-center h-9 w-9 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition"
+                                                        title="Subir"
+                                                        aria-label="Subir">
+                                                    <i class="fas fa-arrow-up text-gray-700"></i>
+                                                </button>
 
                                                 <button type="button"
-                                                        class="move-down px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
-                                                        title="Bajar">↓</button>
+                                                        class="move-down inline-flex items-center justify-center h-9 w-9 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition"
+                                                        title="Bajar"
+                                                        aria-label="Bajar">
+                                                    <i class="fas fa-arrow-down text-gray-700"></i>
+                                                </button>
 
-                                                <span class="text-xs text-gray-500 order-badge">#{{ $inst->orden }}</span>
+                                                <span class="order-badge inline-flex items-center gap-2 text-xs font-semibold px-3 py-1 rounded-full bg-[#9F2241]/10 text-[#9F2241] border border-[#9F2241]/10">
+                                                    <i class="fas fa-hashtag text-[11px]"></i>
+                                                    #{{ $inst->orden }}
+                                                </span>
                                             </div>
 
                                             <input type="hidden" name="ids[]" value="{{ $inst->id }}">
                                         </td>
 
-                                        <td class="py-3 px-4 font-semibold text-gray-800">
-                                            {{ $inst->nombre }}
+                                        <td class="py-3 px-4">
+                                            <div class="font-semibold text-gray-800 break-words">
+                                                {{ $inst->nombre }}
+                                            </div>
                                         </td>
 
                                         <td class="py-3 px-4 text-gray-700">
-                                            {{ $inst->siglas ?? '—' }}
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gray-50 border border-gray-200">
+                                                {{ $inst->siglas ?? '—' }}
+                                            </span>
                                         </td>
 
                                         <td class="py-3 px-4">
-                                            <div class="flex items-center gap-3">
+                                            <div class="flex flex-wrap items-center gap-2">
                                                 <a href="{{ route('admin.instituciones.edit', $inst) }}"
-                                                   class="text-[#9F2241] hover:underline font-semibold">
+                                                   class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition">
+                                                    <i class="fas fa-pen-to-square text-[#9F2241]"></i>
                                                     Editar
                                                 </a>
 
                                                 {{-- Eliminar SIN form aquí (para no anidar) --}}
                                                 <button type="button"
-                                                        class="text-red-600 hover:underline font-semibold"
+                                                        class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition"
                                                         onclick="if(confirm('¿Seguro que deseas eliminar esta institución?')) document.getElementById('del-inst-{{ $inst->id }}').submit();">
+                                                    <i class="fas fa-trash"></i>
                                                     Eliminar
                                                 </button>
                                             </div>
@@ -99,7 +163,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="4" class="py-8 px-4 text-center text-gray-500">
+                                        <td colspan="4" class="py-10 px-4 text-center text-gray-500">
                                             No hay instituciones registradas.
                                         </td>
                                     </tr>
@@ -108,21 +172,23 @@
                         </table>
                     </div>
 
-                    <div class="mt-4 flex items-center justify-between">
-                        <p class="text-sm text-gray-500">
-                            Usa ↑/↓ para acomodar y luego guarda el orden.
+                    <div class="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <p class="text-sm text-gray-500 flex items-start gap-2">
+                            <i class="fas fa-circle-info text-gray-400 mt-0.5"></i>
+                            <span>Usa ↑/↓ para acomodar y luego guarda el orden.</span>
                         </p>
 
                         <button type="submit"
-                                class="px-4 py-2 rounded-lg bg-[#9F2241] text-white font-semibold shadow hover:bg-[#691C32] transition">
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#9F2241] text-white font-semibold shadow-sm hover:bg-[#691C32] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#9F2241] transition">
+                            <i class="fas fa-save"></i>
                             Guardar orden
                         </button>
                     </div>
                 </form>
 
-                {{-- Si sigues usando paginación, déjalo; pero ojo: solo ordenas la página actual --}}
+                {{-- Paginación (si aplica) --}}
                 @if(method_exists($instituciones, 'links'))
-                    <div class="mt-6">
+                    <div class="px-6 py-6 border-t border-gray-100">
                         {{ $instituciones->links() }}
                     </div>
                 @endif
@@ -144,18 +210,18 @@
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-    const tbody = document.getElementById('instTbody');
+      const tbody = document.getElementById('instTbody');
 
-    function renumerarBadges() {
+      function renumerarBadges() {
         const rows = [...tbody.querySelectorAll('tr[data-id]')];
         rows.forEach((row, idx) => {
-        const badge = row.querySelector('.order-badge');
-        if (badge) badge.textContent = `#${idx + 1}`;
+          const badge = row.querySelector('.order-badge');
+          if (badge) badge.textContent = `#${idx + 1}`;
         });
-    }
-    renumerarBadges();
+      }
+      renumerarBadges();
 
-    tbody.addEventListener('click', (e) => {
+      tbody.addEventListener('click', (e) => {
         const up = e.target.closest('.move-up');
         const down = e.target.closest('.move-down');
         if (!up && !down) return;
@@ -164,16 +230,16 @@
         if (!row) return;
 
         if (up) {
-        const prev = row.previousElementSibling;
-        if (prev) tbody.insertBefore(row, prev);
+          const prev = row.previousElementSibling;
+          if (prev) tbody.insertBefore(row, prev);
         }
 
         if (down) {
-        const next = row.nextElementSibling;
-        if (next) tbody.insertBefore(next, row);
+          const next = row.nextElementSibling;
+          if (next) tbody.insertBefore(next, row);
         }
         renumerarBadges();
-    });
+      });
     });
     </script>
 

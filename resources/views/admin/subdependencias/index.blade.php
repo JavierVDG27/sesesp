@@ -1,172 +1,154 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-white leading-tight">
-            Subdependencias
-        </h2>
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+            <div>
+                <h2 class="font-semibold text-2xl text-white leading-tight">
+                    Subdependencias
+                </h2>
+                <p class="text-white/80 text-sm mt-1">
+                    Selecciona una institución, reordena con ↑↓ y guarda al final.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('admin.dependencias.index') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/20 bg-white/10 text-white hover:bg-white/15 transition">
+                    <i class="fas fa-arrow-left"></i>
+                    Regresar
+                </a>
+
+                <a href="{{ route('admin.subdependencias.create') }}"
+                   class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-[#9F2241] font-semibold shadow-sm hover:bg-gray-50 transition">
+                    <i class="fas fa-plus"></i>
+                    Nueva subdependencia
+                </a>
+            </div>
+        </div>
     </x-slot>
 
-    <div class="py-10 bg-gray-50 min-h-screen">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+    <div class="py-10">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
             @if(session('success'))
-                <div class="mb-6 p-4 bg-green-100 text-green-800 border border-green-200 rounded-xl">
-                    {{ session('success') }}
+                <div class="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5 text-green-700">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="text-green-800 text-sm">
+                            <p class="font-semibold">Operación realizada</p>
+                            <p class="mt-0.5">{{ session('success') }}</p>
+                        </div>
+                    </div>
                 </div>
             @endif
 
             @if(session('error'))
-                <div class="mb-6 p-4 bg-red-100 text-red-800 border border-red-200 rounded-xl">
-                    {{ session('error') }}
+                <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5 text-red-700">
+                            <i class="fas fa-triangle-exclamation"></i>
+                        </div>
+                        <div class="text-red-800 text-sm">
+                            <p class="font-semibold">No se pudo completar</p>
+                            <p class="mt-0.5">{{ session('error') }}</p>
+                        </div>
+                    </div>
                 </div>
             @endif
 
-            <div class="bg-white shadow-lg rounded-2xl p-6">
+            {{-- Card principal --}}
+            <div class="bg-white shadow-sm rounded-2xl border border-gray-200 overflow-hidden">
 
-                <div class="flex items-center justify-between mb-6">
-                    <a href="{{ route('admin.dependencias.index') }}"
-                       class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
-                        ← Regresar a Dependencias
-                    </a>
+                <div class="px-6 py-5 border-b border-gray-100">
+                    <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                        <div class="flex items-start gap-3">
+                            <div class="h-10 w-10 rounded-xl bg-[#9F2241]/10 border border-[#9F2241]/15 text-[#9F2241] flex items-center justify-center">
+                                <i class="fas fa-sitemap"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-lg font-semibold text-gray-800">Gestión de Subdependencias</h1>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    Filtra por institución para reordenar. Sin filtro, solo se muestra el listado general.
+                                </p>
+                            </div>
+                        </div>
 
-                    <div>
-                        <h1 class="text-2xl text-center font-bold text-[#691C32]">Gestión de Subdependencias</h1>
-                        <p class="text-gray-600 text-sm">Selecciona una institución, reordena con ↑↓ y guarda al final.</p>
+                        {{-- FILTRO POR INSTITUCIÓN --}}
+                        <form method="GET" class="flex flex-col sm:flex-row sm:items-center gap-2">
+                            <label class="text-sm font-semibold text-gray-700">Institución:</label>
+
+                            <select name="institucion_id"
+                                    class="w-full sm:w-80 rounded-xl border-gray-300 shadow-sm
+                                           focus:border-[#9F2241] focus:ring-[#9F2241]"
+                                    onchange="this.form.submit()">
+                                <option value="">— Selecciona —</option>
+                                @foreach($instituciones as $inst)
+                                    <option value="{{ $inst->id }}" {{ (int)$institucionId === (int)$inst->id ? 'selected' : '' }}>
+                                        {{ $inst->nombre }}{{ $inst->siglas ? ' ('.$inst->siglas.')' : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            @if($institucionId)
+                                <a href="{{ route('admin.subdependencias.index') }}"
+                                   class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 transition">
+                                    <i class="fas fa-filter-circle-xmark text-gray-500"></i>
+                                    Quitar filtro
+                                </a>
+                            @endif
+                        </form>
                     </div>
-
-                    <a href="{{ route('admin.subdependencias.create') }}"
-                       class="px-4 py-2 rounded-lg bg-[#9F2241] text-white font-semibold shadow hover:bg-[#691C32] transition">
-                        + Nueva subdependencia
-                    </a>
                 </div>
 
-                {{-- FILTRO POR INSTITUCIÓN --}}
-                <form method="GET" class="flex items-center gap-3 mb-5">
-                    <label class="text-sm font-semibold text-gray-700">Institución:</label>
+                <div class="p-6 space-y-5">
 
-                    <select name="institucion_id"
-                            class="rounded-lg border-gray-300"
-                            onchange="this.form.submit()">
-                        <option value="">— Selecciona —</option>
-                        @foreach($instituciones as $inst)
-                            <option value="{{ $inst->id }}" {{ (int)$institucionId === (int)$inst->id ? 'selected' : '' }}>
-                                {{ $inst->nombre }}{{ $inst->siglas ? ' ('.$inst->siglas.')' : '' }}
-                            </option>
-                        @endforeach
-                    </select>
-
-                    @if($institucionId)
-                        <a href="{{ route('admin.subdependencias.index') }}"
-                           class="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
-                            Quitar filtro
-                        </a>
-                    @endif
-                </form>
-
-                {{-- SI NO HAY INSTITUCIÓN SELECCIONADA --}}
-                @if(!$institucionId)
-                    <div class="p-4 bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-xl">
-                        Selecciona una institución para reordenar sus subdependencias.
-                    </div>
-
-                    <div class="mt-6 overflow-x-auto bg-white rounded-xl border border-gray-200">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="bg-[#9F2241]/10 text-[#691C32] font-semibold">
-                                    <th class="py-3 px-4">Nombre</th>
-                                    <th class="py-3 px-4">Institución</th>
-                                    <th class="py-3 px-4">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($subdependencias as $sub)
-                                    <tr class="border-t">
-                                        <td class="py-3 px-4 font-semibold text-gray-800">{{ $sub->nombre }}</td>
-                                        <td class="py-3 px-4 text-gray-700">{{ $sub->institucion?->nombre ?? '—' }}</td>
-                                        <td class="py-3 px-4">
-                                            <div class="flex items-center gap-3">
-                                                <a href="{{ route('admin.subdependencias.edit', $sub) }}"
-                                                   class="text-[#9F2241] hover:underline font-semibold">
-                                                    Editar
-                                                </a>
-
-                                                <button type="button"
-                                                        class="text-red-600 hover:underline font-semibold"
-                                                        onclick="if(confirm('¿Seguro que deseas eliminar esta subdependencia?')) document.getElementById('del-sub-{{ $sub->id }}').submit();">
-                                                    Eliminar
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="3" class="py-8 px-4 text-center text-gray-500">
-                                            No hay subdependencias registradas.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    @if(method_exists($subdependencias, 'links'))
-                        <div class="mt-6">
-                            {{ $subdependencias->links() }}
+                    {{-- SI NO HAY INSTITUCIÓN SELECCIONADA --}}
+                    @if(!$institucionId)
+                        <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3">
+                            <div class="flex items-start gap-3">
+                                <div class="mt-0.5 text-amber-700">
+                                    <i class="fas fa-circle-info"></i>
+                                </div>
+                                <div class="text-amber-800 text-sm">
+                                    <p class="font-semibold">Selecciona una institución</p>
+                                    <p class="mt-0.5">Para reordenar subdependencias, primero aplica un filtro de institución.</p>
+                                </div>
+                            </div>
                         </div>
-                    @endif
 
-                @else
-                    {{-- REORDEN (BATCH) SOLO CUANDO HAY INSTITUCIÓN --}}
-                    <form method="POST" action="{{ route('admin.subdependencias.orden.batch') }}" id="subOrdenForm">
-                        @csrf
-                        <input type="hidden" name="institucion_id" value="{{ $institucionId }}">
-                        <div id="subHidden"></div>
-
-                        <div class="overflow-x-auto bg-white rounded-xl border border-gray-200">
+                        <div class="overflow-x-auto bg-white rounded-2xl border border-gray-200">
                             <table class="w-full text-left">
-                                <thead>
-                                    <tr class="bg-[#9F2241]/10 text-[#691C32] font-semibold">
-                                        <th class="py-3 px-4 w-44">Reordenar</th>
+                                <thead class="bg-gray-50">
+                                    <tr class="text-gray-700 font-semibold">
                                         <th class="py-3 px-4">Nombre</th>
                                         <th class="py-3 px-4">Institución</th>
                                         <th class="py-3 px-4">Acciones</th>
                                     </tr>
                                 </thead>
-
-                                <tbody id="subTbody">
+                                <tbody class="divide-y divide-gray-100">
                                     @forelse($subdependencias as $sub)
-                                        <tr class="border-t" data-id="{{ $sub->id }}">
+                                        <tr class="hover:bg-gray-50 transition">
                                             <td class="py-3 px-4">
-                                                <div class="flex items-center gap-2">
-                                                    <button type="button"
-                                                            class="sub-up px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
-                                                            title="Subir">↑</button>
-
-                                                    <button type="button"
-                                                            class="sub-down px-2 py-1 rounded border border-gray-300 hover:bg-gray-50"
-                                                            title="Bajar">↓</button>
-
-                                                    <span class="text-xs text-gray-500 sub-badge">#</span>
+                                                <div class="font-semibold text-gray-800 break-words">
+                                                    {{ $sub->nombre }}
                                                 </div>
                                             </td>
-
-                                            <td class="py-3 px-4 font-semibold text-gray-800">
-                                                {{ $sub->nombre }}
-                                            </td>
-
-                                            <td class="py-3 px-4 text-gray-700">
+                                            <td class="py-3 px-4 text-gray-700 break-words">
                                                 {{ $sub->institucion?->nombre ?? '—' }}
                                             </td>
-
                                             <td class="py-3 px-4">
-                                                <div class="flex items-center gap-3">
+                                                <div class="flex flex-wrap items-center gap-2">
                                                     <a href="{{ route('admin.subdependencias.edit', $sub) }}"
-                                                       class="text-[#9F2241] hover:underline font-semibold">
+                                                       class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition">
+                                                        <i class="fas fa-pen-to-square text-[#9F2241]"></i>
                                                         Editar
                                                     </a>
 
                                                     <button type="button"
-                                                            class="text-red-600 hover:underline font-semibold"
+                                                            class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition"
                                                             onclick="if(confirm('¿Seguro que deseas eliminar esta subdependencia?')) document.getElementById('del-sub-{{ $sub->id }}').submit();">
+                                                        <i class="fas fa-trash"></i>
                                                         Eliminar
                                                     </button>
                                                 </div>
@@ -174,7 +156,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="4" class="py-8 px-4 text-center text-gray-500">
+                                            <td colspan="3" class="py-10 px-4 text-center text-gray-500">
                                                 No hay subdependencias registradas.
                                             </td>
                                         </tr>
@@ -183,19 +165,129 @@
                             </table>
                         </div>
 
-                        <div class="mt-4 flex items-center justify-between">
-                            <p class="text-sm text-gray-500">
-                                Ordena con ↑↓ (no recarga). Al final presiona “Guardar orden”.
-                            </p>
+                        @if(method_exists($subdependencias, 'links'))
+                            <div class="pt-2">
+                                {{ $subdependencias->links() }}
+                            </div>
+                        @endif
 
-                            <button type="submit"
-                                    class="px-4 py-2 rounded-lg bg-[#9F2241] text-white font-semibold shadow hover:bg-[#691C32] transition">
-                                Guardar orden
-                            </button>
-                        </div>
-                    </form>
-                @endif
+                    @else
+                        {{-- REORDEN (BATCH) SOLO CUANDO HAY INSTITUCIÓN --}}
+                        <form method="POST" action="{{ route('admin.subdependencias.orden.batch') }}" id="subOrdenForm" class="space-y-4">
+                            @csrf
+                            <input type="hidden" name="institucion_id" value="{{ $institucionId }}">
+                            <div id="subHidden"></div>
 
+                            <div class="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3">
+                                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                    <div class="flex items-start gap-3">
+                                        <div class="mt-0.5 text-[#9F2241]">
+                                            <i class="fas fa-sort"></i>
+                                        </div>
+                                        <div class="text-sm text-gray-700">
+                                            <p class="font-semibold">Modo reordenamiento activo</p>
+                                            <p class="text-gray-600 mt-0.5">Ordena con ↑↓ (no recarga). Al final presiona “Guardar orden”.</p>
+                                        </div>
+                                    </div>
+
+                                    <span class="inline-flex items-center gap-2 text-xs font-semibold bg-white border border-gray-200 px-3 py-1 rounded-full">
+                                        <i class="fas fa-filter text-gray-500"></i>
+                                        Institución seleccionada: {{ $instituciones->firstWhere('id', $institucionId)?->nombre ?? '—' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto bg-white rounded-2xl border border-gray-200">
+                                <table class="w-full text-left">
+                                    <thead class="bg-gray-50">
+                                        <tr class="text-gray-700 font-semibold">
+                                            <th class="py-3 px-4 w-48">Orden</th>
+                                            <th class="py-3 px-4">Nombre</th>
+                                            <th class="py-3 px-4">Institución</th>
+                                            <th class="py-3 px-4">Acciones</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="subTbody" class="divide-y divide-gray-100">
+                                        @forelse($subdependencias as $sub)
+                                            <tr class="hover:bg-gray-50 transition" data-id="{{ $sub->id }}">
+                                                <td class="py-3 px-4">
+                                                    <div class="flex items-center gap-2">
+                                                        <button type="button"
+                                                                class="sub-up inline-flex items-center justify-center h-9 w-9 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition"
+                                                                title="Subir"
+                                                                aria-label="Subir">
+                                                            <i class="fas fa-arrow-up text-gray-700"></i>
+                                                        </button>
+
+                                                        <button type="button"
+                                                                class="sub-down inline-flex items-center justify-center h-9 w-9 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 shadow-sm transition"
+                                                                title="Bajar"
+                                                                aria-label="Bajar">
+                                                            <i class="fas fa-arrow-down text-gray-700"></i>
+                                                        </button>
+
+                                                        <span class="sub-badge inline-flex items-center gap-2 text-xs font-semibold px-3 py-1 rounded-full bg-[#9F2241]/10 text-[#9F2241] border border-[#9F2241]/10">
+                                                            <i class="fas fa-hashtag text-[11px]"></i>
+                                                            #
+                                                        </span>
+                                                    </div>
+                                                </td>
+
+                                                <td class="py-3 px-4">
+                                                    <div class="font-semibold text-gray-800 break-words">
+                                                        {{ $sub->nombre }}
+                                                    </div>
+                                                </td>
+
+                                                <td class="py-3 px-4 text-gray-700 break-words">
+                                                    {{ $sub->institucion?->nombre ?? '—' }}
+                                                </td>
+
+                                                <td class="py-3 px-4">
+                                                    <div class="flex flex-wrap items-center gap-2">
+                                                        <a href="{{ route('admin.subdependencias.edit', $sub) }}"
+                                                           class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition">
+                                                            <i class="fas fa-pen-to-square text-[#9F2241]"></i>
+                                                            Editar
+                                                        </a>
+
+                                                        <button type="button"
+                                                                class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition"
+                                                                onclick="if(confirm('¿Seguro que deseas eliminar esta subdependencia?')) document.getElementById('del-sub-{{ $sub->id }}').submit();">
+                                                            <i class="fas fa-trash"></i>
+                                                            Eliminar
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="py-10 px-4 text-center text-gray-500">
+                                                    No hay subdependencias registradas.
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <p class="text-sm text-gray-500 flex items-start gap-2">
+                                    <i class="fas fa-circle-info text-gray-400 mt-0.5"></i>
+                                    <span>El orden se guarda cuando presionas “Guardar orden”.</span>
+                                </p>
+
+                                <button type="submit"
+                                        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#9F2241] text-white font-semibold shadow-sm hover:bg-[#691C32] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#9F2241] transition">
+                                    <i class="fas fa-save"></i>
+                                    Guardar orden
+                                </button>
+                            </div>
+                        </form>
+                    @endif
+
+                </div>
             </div>
         </div>
     </div>

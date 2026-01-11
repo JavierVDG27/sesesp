@@ -19,7 +19,7 @@
                                hover:text-[#9F2241] border-b-2 border-transparent hover:border-[#9F2241]
                                transition"
                     >
-                        Dashboard
+                        INICIO
                     </a>
                 </div>
 
