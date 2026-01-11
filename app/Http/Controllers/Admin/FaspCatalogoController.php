@@ -13,6 +13,8 @@ use Illuminate\Validation\Rule;
 use App\Models\FaspAsignacion;
 use App\Models\FaspAsignacionInstitucion;
 
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Exports\FaspCatalogoPlantillaExport;
 
 class FaspCatalogoController extends Controller
 {
@@ -146,6 +148,9 @@ class FaspCatalogoController extends Controller
 
     public function import(Request $request, FaspTreeService $tree, FaspRollupService $rollup)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(0);
+
         $request->validate([
             'archivo' => 'required|file|mimes:xlsx,xls',
             'year' => 'required|integer',
@@ -415,5 +420,101 @@ class FaspCatalogoController extends Controller
         }
         return $out;
     }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $year = (int) $request->input('year', date('Y'));
+        $entidad = (string) ($request->input('entidad', '8300')); // si manejas entidad fija, déjalo así
+
+        $q = FaspCatalogo::query()
+            ->where('year', $year)
+            ->where('entidad', $entidad);
+
+        // mismos filtros que tu index (si vienen)
+        foreach (['eje','programa','subprograma','capitulo','concepto','partida_generica','bien'] as $f) {
+            if ($request->filled($f)) {
+                $q->where($f, (string)$request->input($f));
+            }
+        }
+
+        // orden “natural” por jerarquía
+        $q->orderBy('nivel')
+        ->orderBy('eje')
+        ->orderBy('programa')
+        ->orderBy('subprograma')
+        ->orderBy('capitulo')
+        ->orderBy('concepto')
+        ->orderBy('partida_generica')
+        ->orderBy('bien');
+
+        $filename = "FASP_catalogo_{$entidad}_{$year}.csv";
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+            'Cache-Control'       => 'no-store, no-cache',
+        ];
+
+        return response()->stream(function () use ($q) {
+            $out = fopen('php://output', 'w');
+
+            // BOM para Excel (evita caracteres raros)
+            fwrite($out, "\xEF\xBB\xBF");
+
+            // encabezados CSV
+            fputcsv($out, [
+                'id','year','entidad','nivel','parent_id',
+                'eje','programa','subprograma','capitulo','concepto','partida_generica','bien',
+                'codigo','nombre',
+                'fed_federal','fed_municipal','est_estatal','est_municipal',
+                'unidad_medida','cantidad','rlcf',
+            ]);
+
+            $q->chunk(2000, function ($rows) use ($out) {
+                foreach ($rows as $r) {
+                    $codigo = collect([
+                        $r->eje,$r->programa,$r->subprograma,$r->capitulo,$r->concepto,$r->partida_generica,$r->bien
+                    ])->filter(fn($v) => $v !== null && $v !== '')->implode('.');
+
+                    fputcsv($out, [
+                        $r->id,
+                        $r->year,
+                        $r->entidad,
+                        $r->nivel,
+                        $r->parent_id,
+                        $r->eje,
+                        $r->programa,
+                        $r->subprograma,
+                        $r->capitulo,
+                        $r->concepto,
+                        $r->partida_generica,
+                        $r->bien,
+                        $codigo,
+                        $r->nombre,
+                        $r->fed_federal,
+                        $r->fed_municipal,
+                        $r->est_estatal,
+                        $r->est_municipal,
+                        $r->unidad_medida,
+                        $r->cantidad,
+                        $r->rlcf,
+                    ]);
+                }
+            });
+
+            fclose($out);
+        }, 200, $headers);
+    }
+
+    public function exportPlantilla(Request $request)
+    {
+        $year = (int) $request->input('year', now()->year);
+        $entidad = '8300';
+
+        $filename = "FASP_PLANTILLA_{$entidad}_{$year}.xlsx";
+
+        return Excel::download(new FaspCatalogoPlantillaExport($year, $entidad), $filename);
+    }
+
 
 }

@@ -100,6 +100,13 @@ Route::middleware(['auth', 'role:admin'])
         Route::delete('/catalogo-fasp/{row}', [FaspCatalogoController::class, 'destroy'])->name('fasp.destroyRow');
         Route::patch('/catalogo-fasp/{row}', [FaspCatalogoController::class, 'update'])->name('fasp.update');
         Route::post('/catalogo-fasp/recalcular', [FaspCatalogoController::class, 'recalcular'])->name('fasp.recalcular');
+
+        // Exportar Excel
+        Route::get('/catalogo-fasp/export', [FaspCatalogoController::class, 'export'])
+            ->name('fasp.export');
+        Route::get('/catalogo-fasp/export-plantilla', [FaspCatalogoController::class, 'exportPlantilla'])
+            ->name('fasp.exportPlantilla');
+
     });
 
     // =========================

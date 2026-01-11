@@ -90,6 +90,25 @@
                         </button>
                     </form>
 
+                    {{-- Exportar catálogo del año seleccionado (y filtros si existen) --}}
+                    <form method="GET" action="{{ route('admin.fasp.exportPlantilla') }}">
+                        <input type="hidden" name="year" value="{{ $year }}">
+
+                        {{-- filtros exportar --}}
+                        <input type="hidden" name="eje" value="{{ request('eje') }}">
+                        <input type="hidden" name="programa" value="{{ request('programa') }}">
+                        <input type="hidden" name="subprograma" value="{{ request('subprograma') }}">
+                        <input type="hidden" name="capitulo" value="{{ request('capitulo') }}">
+                        <input type="hidden" name="concepto" value="{{ request('concepto') }}">
+                        <input type="hidden" name="partida_generica" value="{{ request('partida_generica') }}">
+                        <input type="hidden" name="bien" value="{{ request('bien') }}">
+
+                            <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg"
+                                    {{ ($summary['count'] ?? 0) === 0 ? 'disabled' : '' }}>
+                                Exportar plantilla (XLSX)
+                            </button>
+                    </form>
+
                     {{-- Eliminar catálogo del año seleccionado --}}
                     <form method="POST" action="{{ route('admin.fasp.destroyByYear') }}"
                           onsubmit="return confirm('¿Seguro que quieres eliminar TODO el catálogo FASP del año {{ $year }} Y sus Asignaciones? Esta acción no se puede deshacer.');">
