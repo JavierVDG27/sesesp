@@ -146,11 +146,13 @@
                                                     </a>
 
                                                     <button type="button"
-                                                            class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition"
-                                                            onclick="if(confirm('¿Seguro que deseas eliminar esta subdependencia?')) document.getElementById('del-sub-{{ $sub->id }}').submit();">
-                                                        <i class="fas fa-trash"></i>
-                                                        Eliminar
-                                                    </button>
+                                                        class="js-open-delete-sub inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition"
+                                                        data-id="{{ $sub->id }}"
+                                                        data-nombre="{{ $sub->nombre }}"
+                                                        data-inst="{{ $sub->institucion?->nombre ?? '—' }}">
+                                                    <i class="fas fa-trash"></i>
+                                                    Eliminar
+                                                </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -253,8 +255,10 @@
                                                         </a>
 
                                                         <button type="button"
-                                                                class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition"
-                                                                onclick="if(confirm('¿Seguro que deseas eliminar esta subdependencia?')) document.getElementById('del-sub-{{ $sub->id }}').submit();">
+                                                                class="js-open-delete-sub inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition"
+                                                                data-id="{{ $sub->id }}"
+                                                                data-nombre="{{ $sub->nombre }}"
+                                                                data-inst="{{ $sub->institucion?->nombre ?? '—' }}">
                                                             <i class="fas fa-trash"></i>
                                                             Eliminar
                                                         </button>
@@ -303,76 +307,228 @@
         </form>
     @endforeach
 
+    {{-- MODAL ELIMINAR SUBDEPENDENCIA --}}
+    <div id="deleteSubModal"
+        class="fixed inset-0 z-50 hidden"
+        aria-labelledby="deleteSubModalTitle"
+        role="dialog"
+        aria-modal="true">
+
+        {{-- Overlay --}}
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-[2px]" data-close></div>
+
+        <div class="relative min-h-full flex items-center justify-center p-4">
+            <div id="deleteSubModalPanel"
+                class="w-full max-w-lg rounded-2xl bg-white shadow-xl border border-gray-200 overflow-hidden">
+
+                <div class="px-6 py-5 border-b border-gray-100 flex items-start gap-3">
+                    <div class="h-10 w-10 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-700">
+                        <i class="fas fa-triangle-exclamation"></i>
+                    </div>
+
+                    <div class="flex-1">
+                        <h3 id="deleteSubModalTitle" class="text-lg font-semibold text-gray-800">
+                            Confirmar eliminación
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Esta acción no se puede deshacer.
+                        </p>
+                    </div>
+
+                    <button type="button"
+                            class="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition"
+                            aria-label="Cerrar"
+                            data-close>
+                        <i class="fas fa-xmark text-gray-600"></i>
+                    </button>
+                </div>
+
+                <div class="px-6 py-5">
+                    <p class="text-sm text-gray-600">
+                        ¿Seguro que deseas eliminar la subdependencia:
+                    </p>
+
+                    <div class="mt-3 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                        <div class="text-sm text-gray-500">Subdependencia</div>
+                        <div class="mt-1 text-base font-semibold text-gray-800 break-words" id="deleteSubNombre">—</div>
+
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white border border-gray-200 text-gray-700">
+                                <i class="fas fa-building text-gray-400"></i>
+                                <span id="deleteSubInst">—</span>
+                            </span>
+
+                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 border border-red-200 text-red-700">
+                                <i class="fas fa-trash"></i>
+                                Eliminación permanente
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row gap-2 sm:justify-end">
+                    <button type="button"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition"
+                            data-close>
+                        <i class="fas fa-ban"></i>
+                        Cancelar
+                    </button>
+
+                    <button type="button"
+                            id="confirmDeleteSubBtn"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 text-white font-semibold shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600 transition">
+                        <i class="fas fa-trash"></i>
+                        Sí, eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const tbody = document.getElementById('subTbody');
-        const hidden = document.getElementById('subHidden');
-        const form = document.getElementById('subOrdenForm');
+    // ==========================================
+    // REORDENAR (solo cuando existe subTbody/form)
+    // ==========================================
+    const tbody = document.getElementById('subTbody');
+    const hidden = document.getElementById('subHidden');
+    const form = document.getElementById('subOrdenForm');
 
-        if (!tbody || !hidden || !form) return;
-
+    if (tbody && hidden && form) {
         function renumerar() {
-            const rows = [...tbody.querySelectorAll('tr[data-id]')];
-            rows.forEach((row, idx) => {
-                const badge = row.querySelector('.sub-badge');
-                if (badge) badge.textContent = `#${idx + 1}`;
-            });
+        const rows = [...tbody.querySelectorAll('tr[data-id]')];
+        rows.forEach((row, idx) => {
+            const badge = row.querySelector('.sub-badge');
+            if (badge) badge.textContent = `#${idx + 1}`;
+        });
         }
 
         function rebuildHiddenItems() {
-            hidden.innerHTML = '';
-            const rows = [...tbody.querySelectorAll('tr[data-id]')];
+        hidden.innerHTML = '';
+        const rows = [...tbody.querySelectorAll('tr[data-id]')];
 
-            rows.forEach((row, idx) => {
-                const id = row.dataset.id;
-                const ord = idx + 1;
+        rows.forEach((row, idx) => {
+            const id = row.dataset.id;
+            const ord = idx + 1;
 
-                const i = idx;
+            const inId = document.createElement('input');
+            inId.type = 'hidden';
+            inId.name = `items[${idx}][id]`;
+            inId.value = id;
 
-                const inId = document.createElement('input');
-                inId.type = 'hidden';
-                inId.name = `items[${i}][id]`;
-                inId.value = id;
+            const inOrd = document.createElement('input');
+            inOrd.type = 'hidden';
+            inOrd.name = `items[${idx}][orden]`;
+            inOrd.value = ord;
 
-                const inOrd = document.createElement('input');
-                inOrd.type = 'hidden';
-                inOrd.name = `items[${i}][orden]`;
-                inOrd.value = ord;
-
-                hidden.appendChild(inId);
-                hidden.appendChild(inOrd);
-            });
+            hidden.appendChild(inId);
+            hidden.appendChild(inOrd);
+        });
         }
 
         function moveUp(row) {
-            const prev = row.previousElementSibling;
-            if (prev) tbody.insertBefore(row, prev);
+        const prev = row.previousElementSibling;
+        if (prev) tbody.insertBefore(row, prev);
         }
 
         function moveDown(row) {
-            const next = row.nextElementSibling;
-            if (next) tbody.insertBefore(next, row);
+        const next = row.nextElementSibling;
+        if (next) tbody.insertBefore(next, row);
         }
 
         renumerar();
 
         tbody.addEventListener('click', (e) => {
-            const up = e.target.closest('.sub-up');
-            const down = e.target.closest('.sub-down');
-            if (!up && !down) return;
+        const up = e.target.closest('.sub-up');
+        const down = e.target.closest('.sub-down');
+        if (!up && !down) return;
 
-            const row = e.target.closest('tr');
-            if (!row) return;
+        const row = e.target.closest('tr');
+        if (!row) return;
 
-            if (up) moveUp(row);
-            if (down) moveDown(row);
+        if (up) moveUp(row);
+        if (down) moveDown(row);
 
-            renumerar();
+        renumerar();
         });
 
         form.addEventListener('submit', () => {
-            rebuildHiddenItems();
+        rebuildHiddenItems();
         });
+    }
+
+    // =============================
+    // MODAL ELIMINAR SUBDEPENDENCIA
+    // =============================
+    const modal = document.getElementById('deleteSubModal');
+    const panel = document.getElementById('deleteSubModalPanel');
+    const nombreEl = document.getElementById('deleteSubNombre');
+    const instEl = document.getElementById('deleteSubInst');
+    const confirmBtn = document.getElementById('confirmDeleteSubBtn');
+
+    if (!modal || !panel || !nombreEl || !instEl || !confirmBtn) return;
+
+    let currentDeleteId = null;
+    let lastFocusedEl = null;
+
+    function openModal({ id, nombre, inst }) {
+        currentDeleteId = id;
+        lastFocusedEl = document.activeElement;
+
+        nombreEl.textContent = nombre || '—';
+        instEl.textContent = inst || '—';
+
+        modal.classList.remove('hidden');
+        document.documentElement.classList.add('overflow-hidden');
+
+        setTimeout(() => confirmBtn.focus(), 0);
+    }
+
+    function closeModal() {
+        modal.classList.add('hidden');
+        document.documentElement.classList.remove('overflow-hidden');
+        currentDeleteId = null;
+
+        if (lastFocusedEl && typeof lastFocusedEl.focus === 'function') {
+        lastFocusedEl.focus();
+        }
+    }
+
+    // Abrir modal desde cualquier botón eliminar (en cualquiera de las 2 tablas)
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.js-open-delete-sub');
+        if (!btn) return;
+
+        openModal({
+        id: btn.dataset.id,
+        nombre: btn.dataset.nombre,
+        inst: btn.dataset.inst
+        });
+    });
+
+    // Cerrar modal
+    modal.addEventListener('click', (e) => {
+        if (e.target.closest('[data-close]')) {
+        closeModal();
+        return;
+        }
+        if (!panel.contains(e.target)) {
+        closeModal();
+        }
+    });
+
+    // ESC
+    document.addEventListener('keydown', (e) => {
+        if (modal.classList.contains('hidden')) return;
+        if (e.key === 'Escape') closeModal();
+    });
+
+    // Confirmar eliminación
+    confirmBtn.addEventListener('click', () => {
+        if (!currentDeleteId) return;
+        const form = document.getElementById(`del-sub-${currentDeleteId}`);
+        if (form) form.submit();
+    });
     });
     </script>
 </x-app-layout>

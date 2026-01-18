@@ -151,10 +151,12 @@
                                                     Editar
                                                 </a>
 
-                                                {{-- Eliminar SIN form aquí (para no anidar) --}}
+                                                {{-- Eliminar --}}
                                                 <button type="button"
-                                                        class="inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition"
-                                                        onclick="if(confirm('¿Seguro que deseas eliminar esta institución?')) document.getElementById('del-inst-{{ $inst->id }}').submit();">
+                                                        class="js-open-delete-modal inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-red-200 bg-red-50 text-red-700 text-sm font-semibold hover:bg-red-100 transition"
+                                                        data-id="{{ $inst->id }}"
+                                                        data-nombre="{{ $inst->nombre }}"
+                                                        data-siglas="{{ $inst->siglas ?? '—' }}">
                                                     <i class="fas fa-trash"></i>
                                                     Eliminar
                                                 </button>
@@ -208,39 +210,193 @@
         </form>
     @endforeach
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const tbody = document.getElementById('instTbody');
 
-      function renumerarBadges() {
-        const rows = [...tbody.querySelectorAll('tr[data-id]')];
-        rows.forEach((row, idx) => {
-          const badge = row.querySelector('.order-badge');
-          if (badge) badge.textContent = `#${idx + 1}`;
-        });
-      }
-      renumerarBadges();
+    {{-- MODAL ELIMINAR --}}
+    <div id="deleteModal"
+        class="fixed inset-0 z-50 hidden"
+        aria-labelledby="deleteModalTitle"
+        role="dialog"
+        aria-modal="true">
 
-      tbody.addEventListener('click', (e) => {
-        const up = e.target.closest('.move-up');
-        const down = e.target.closest('.move-down');
-        if (!up && !down) return;
+        {{-- Overlay --}}
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-[2px]" data-close></div>
 
-        const row = e.target.closest('tr');
-        if (!row) return;
+        {{-- Panel --}}
+        <div class="relative min-h-full flex items-center justify-center p-4">
+            <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl border border-gray-200 overflow-hidden"
+                id="deleteModalPanel">
 
-        if (up) {
-          const prev = row.previousElementSibling;
-          if (prev) tbody.insertBefore(row, prev);
-        }
+                <div class="px-6 py-5 border-b border-gray-100 flex items-start gap-3">
+                    <div class="h-10 w-10 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center text-red-700">
+                        <i class="fas fa-triangle-exclamation"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h3 id="deleteModalTitle" class="text-lg font-semibold text-gray-800">
+                            Confirmar eliminación
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1">
+                            Esta acción no se puede deshacer.
+                        </p>
+                    </div>
 
-        if (down) {
-          const next = row.nextElementSibling;
-          if (next) tbody.insertBefore(next, row);
-        }
-        renumerarBadges();
-      });
+                    <button type="button"
+                            class="h-9 w-9 inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition"
+                            aria-label="Cerrar"
+                            data-close>
+                        <i class="fas fa-xmark text-gray-600"></i>
+                    </button>
+                </div>
+
+                <div class="px-6 py-5">
+                    <p class="text-sm text-gray-600">
+                        ¿Seguro que deseas eliminar la institución:
+                    </p>
+
+                    <div class="mt-3 rounded-2xl border border-gray-200 bg-gray-50 p-4">
+                        <div class="text-sm text-gray-500">Institución</div>
+                        <div class="mt-1 text-base font-semibold text-gray-800 break-words" id="deleteInstNombre">—</div>
+
+                        <div class="mt-3 flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white border border-gray-200 text-gray-700">
+                                <i class="fas fa-id-card text-gray-400"></i>
+                                <span id="deleteInstSiglas">—</span>
+                            </span>
+
+                            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-red-50 border border-red-200 text-red-700">
+                                <i class="fas fa-trash"></i>
+                                Eliminación permanente
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="px-6 py-5 border-t border-gray-100 flex flex-col sm:flex-row gap-2 sm:justify-end">
+                    <button type="button"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-semibold hover:bg-gray-50 transition"
+                            data-close>
+                        <i class="fas fa-ban"></i>
+                        Cancelar
+                    </button>
+
+                    <button type="button"
+                            id="confirmDeleteBtn"
+                            class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 text-white font-semibold shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600 transition">
+                        <i class="fas fa-trash"></i>
+                        Sí, eliminar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // =========================
+  // REORDENAR
+  // =========================
+  const tbody = document.getElementById('instTbody');
+
+  function renumerarBadges() {
+    const rows = [...tbody.querySelectorAll('tr[data-id]')];
+    rows.forEach((row, idx) => {
+      const badge = row.querySelector('.order-badge');
+      if (badge) badge.textContent = `#${idx + 1}`;
     });
-    </script>
+  }
+  renumerarBadges();
+
+  tbody.addEventListener('click', (e) => {
+    const up = e.target.closest('.move-up');
+    const down = e.target.closest('.move-down');
+    if (!up && !down) return;
+
+    const row = e.target.closest('tr');
+    if (!row) return;
+
+    if (up) {
+      const prev = row.previousElementSibling;
+      if (prev) tbody.insertBefore(row, prev);
+    }
+
+    if (down) {
+      const next = row.nextElementSibling;
+      if (next) tbody.insertBefore(next, row);
+    }
+
+    renumerarBadges();
+  });
+
+  // =========================
+  // MODAL ELIMINAR
+  // =========================
+  const modal = document.getElementById('deleteModal');
+  const panel = document.getElementById('deleteModalPanel');
+  const nombreEl = document.getElementById('deleteInstNombre');
+  const siglasEl = document.getElementById('deleteInstSiglas');
+  const confirmBtn = document.getElementById('confirmDeleteBtn');
+
+  let currentDeleteId = null;
+  let lastFocusedEl = null;
+
+  function openModal({ id, nombre, siglas }) {
+    currentDeleteId = id;
+    lastFocusedEl = document.activeElement;
+
+    nombreEl.textContent = nombre || '—';
+    siglasEl.textContent = siglas || '—';
+
+    modal.classList.remove('hidden');
+    document.documentElement.classList.add('overflow-hidden');
+
+    setTimeout(() => confirmBtn.focus(), 0);
+  }
+
+  function closeModal() {
+    modal.classList.add('hidden');
+    document.documentElement.classList.remove('overflow-hidden');
+    currentDeleteId = null;
+
+    if (lastFocusedEl && typeof lastFocusedEl.focus === 'function') {
+      lastFocusedEl.focus();
+    }
+  }
+
+  // Abrir modal
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.js-open-delete-modal');
+    if (!btn) return;
+
+    openModal({
+      id: btn.dataset.id,
+      nombre: btn.dataset.nombre,
+      siglas: btn.dataset.siglas
+    });
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target.closest('[data-close]')) {
+      closeModal();
+      return;
+    }
+
+    if (!panel.contains(e.target)) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (modal.classList.contains('hidden')) return;
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // Confirmar eliminación
+  confirmBtn.addEventListener('click', () => {
+    if (!currentDeleteId) return;
+    const form = document.getElementById(`del-inst-${currentDeleteId}`);
+    if (form) form.submit();
+  });
+});
+</script>
 
 </x-app-layout>

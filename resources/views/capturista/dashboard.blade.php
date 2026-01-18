@@ -6,9 +6,9 @@
                 {{ __('Panel de capturista') }}
             </h2>
 
-            <div class="hidden sm:flex items-center gap-2 text-xs">
-                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-white ring-1 ring-white/15">
-                    <span class="h-2 w-2 rounded-full bg-white/70"></span>
+            <div class="hidden sm:flex items-center gap-2">
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs border border-white/15">
+                    <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
                     CAPTURISTA
                 </span>
             </div>

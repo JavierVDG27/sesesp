@@ -127,21 +127,12 @@
                                 >
                             </div>
 
-                            {{-- Recordarme + Olvidaste --}}
-                            <div class="flex items-center justify-between">
-                                <label class="flex items-center text-sm text-gray-700">
-                                    <input
-                                        type="checkbox"
-                                        name="remember"
-                                        class="rounded border-gray-300 text-[#691C32] focus:ring-[#9F2241]">
-                                    <span class="ml-2">Recuérdame</span>
-                                </label>
-
+                            {{-- Olvidaste Contraseña --}}
+                            <div class="flex items-center justify-center">
                                 <button
                                     type="button"
                                     class="text-sm text-[#9F2241] hover:text-[#691C32] underline"
-                                    @click="showRecoverModal = true"
-                                >
+                                    @click="showRecoverModal = true">
                                     ¿Olvidaste tu contraseña?
                                 </button>
                             </div>

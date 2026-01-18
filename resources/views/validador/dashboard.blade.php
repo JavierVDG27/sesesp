@@ -13,7 +13,7 @@
             <div class="hidden sm:flex items-center gap-2">
                 <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs border border-white/15">
                     <span class="h-2 w-2 rounded-full bg-emerald-400"></span>
-                    Sesión activa
+                    VALIDADOR
                 </span>
             </div>
         </div>

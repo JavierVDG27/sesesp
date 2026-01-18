@@ -428,7 +428,9 @@
                 }
 
                 this.savedMsg = 'Sección guardada.';
-                return data;
+                setTimeout(() => {
+                    this.savedMsg = '';
+                }, 5000);
             },
 
             async saveAll() {
@@ -452,7 +454,6 @@
                 await this.saveAll();
                 window.location.href = payload.previewUrl;
             },
-
         }));
     });
 </script>
@@ -1333,10 +1334,6 @@
                                         </button>
                                     </form>
                                 </div>
-                            </div>
-
-                            <div class="mt-2 text-[11px] text-gray-500">
-                                Nota: después conectamos checklist + validación de presupuesto para habilitar/deshabilitar “Enviar a revisión”.
                             </div>
                         </div>
 

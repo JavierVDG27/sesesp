@@ -164,7 +164,6 @@ Route::middleware(['auth', 'role:capturista'])->group(function () {
     Route::resource('expedientes', ExpedienteController::class)
         ->only(['index','create','store','edit','update','destroy']);
 
-    // (si luego los vuelves a usar)
     Route::post('/expedientes/{expediente}/enviar-validacion', [ExpedienteController::class, 'enviarValidacion'])
         ->name('expedientes.enviar-validacion');
 
@@ -183,7 +182,7 @@ Route::middleware(['auth', 'role:capturista'])->group(function () {
     Route::post('/expedientes/{expediente}/segunda-parte/enviar-revision', [ExpedienteSegundaParteController::class, 'enviarRevision'])
         ->name('expedientes.segunda.enviar');
 
-    // Visualizar el PDF completo 
+
 });
 
 // =========================
