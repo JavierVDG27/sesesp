@@ -11,11 +11,17 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware): void {
+    ->withMiddleware(function (Middleware $middleware) { // Quitamos :void para evitar errores de sintaxis en algunas versiones
+        // Tu middleware de roles actual
         $middleware->alias([
-        'role' => \App\Http\Middleware\CheckRole::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
+        ]);
+
+        // AGREGA ESTO: Exceptuar las rutas de la API del token de seguridad
+        $middleware->validateCsrfTokens(except: [
+            'api/*' 
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
+    ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
