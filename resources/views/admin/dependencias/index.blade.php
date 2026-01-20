@@ -1,3 +1,4 @@
+{{-- resources/views/admin/dependencias/index.blade.php --}}
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
@@ -161,7 +162,7 @@
 
                                                             @foreach(($inst->usuariosSinSubdependencia ?? collect()) as $u)
                                                                 <option value="{{ $u->id }}">
-                                                                    {{ $u->nombres }} ({{ $u->role?->nombre ?? 'sin rol' }})
+                                                                    {{ $u->nombres }} ({{ $u->role?->nombre ?? 'sin asignar' }})
                                                                 </option>
                                                             @endforeach
                                                         </select>
@@ -224,16 +225,105 @@
                                                                     </td>
 
                                                                     <td class="py-3 px-4">
-                                                                        <form method="POST" action="{{ route('admin.dependencias.quitar') }}">
-                                                                            @csrf
-                                                                            <input type="hidden" name="user_id" value="{{ $u->id }}">
+                                                                        {{-- Botón + modal local (mismo patrón que users/index) --}}
+                                                                        <div x-data="{ openQuitar:false }"
+                                                                             @keydown.escape.window="openQuitar=false"
+                                                                             class="inline-block">
 
-                                                                            <button type="submit"
-                                                                                    class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500 text-white text-sm font-semibold shadow-sm hover:bg-amber-600 transition">
+                                                                            <button type="button"
+                                                                                    class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-500 text-white text-sm font-semibold shadow-sm hover:bg-amber-600 transition"
+                                                                                    @click="openQuitar=true">
                                                                                 <i class="fas fa-user-minus"></i>
                                                                                 Quitar
                                                                             </button>
-                                                                        </form>
+
+                                                                            {{-- Modal quitar usuario de la subdependencia --}}
+                                                                            <div
+                                                                                x-show="openQuitar"
+                                                                                x-cloak
+                                                                                class="fixed inset-0 z-50 flex items-center justify-center p-4"
+                                                                                aria-modal="true"
+                                                                                role="dialog"
+                                                                            >
+                                                                                {{-- Fondo --}}
+                                                                                <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"
+                                                                                     @click="openQuitar=false"></div>
+
+                                                                                {{-- Panel --}}
+                                                                                <div
+                                                                                    x-show="openQuitar"
+                                                                                    x-transition.opacity
+                                                                                    x-transition.scale.95
+                                                                                    class="relative w-full max-w-lg bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden"
+                                                                                >
+                                                                                    {{-- Header --}}
+                                                                                    <div class="px-6 py-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white">
+                                                                                        <div class="flex items-center gap-3">
+                                                                                            <div class="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center">
+                                                                                                <i class="fas fa-user-minus"></i>
+                                                                                            </div>
+                                                                                            <div>
+                                                                                                <h2 class="text-lg font-semibold">
+                                                                                                    Quitar usuario de la subdependencia
+                                                                                                </h2>
+                                                                                                <p class="text-xs text-white/80 mt-0.5">
+                                                                                                    Esta acción no elimina al usuario del sistema, solo lo desasigna de la subdependencia.
+                                                                                                </p>
+                                                                                            </div>
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    {{-- Body --}}
+                                                                                    <div class="px-6 py-5 space-y-4">
+                                                                                        <p class="text-sm text-gray-700">
+                                                                                            ¿Estás seguro de que deseas quitar a este usuario de la subdependencia?
+                                                                                        </p>
+
+                                                                                        <div class="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900 space-y-2">
+                                                                                            <div class="flex items-start gap-2">
+                                                                                                <i class="fas fa-user mt-0.5"></i>
+                                                                                                <div>
+                                                                                                    <p class="font-semibold">
+                                                                                                        {{ $u->nombres }} {{ $u->apellido_paterno }} {{ $u->apellido_materno }}
+                                                                                                    </p>
+                                                                                                    <p class="text-xs text-amber-900/80">
+                                                                                                        Usuario asignado a la subdependencia:
+                                                                                                        <span class="font-medium">{{ $sub->nombre }}</span>
+                                                                                                    </p>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                            <p class="text-xs text-amber-900/80 flex gap-2">
+                                                                                                <i class="fas fa-circle-info mt-0.5"></i>
+                                                                                                <span>
+                                                                                                    Podrás volver a asignar a este usuario más adelante desde la sección de “Usuarios sin subdependencia”.
+                                                                                                </span>
+                                                                                            </p>
+                                                                                        </div>
+                                                                                    </div>
+
+                                                                                    {{-- Footer --}}
+                                                                                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row sm:justify-end gap-3">
+                                                                                        <button type="button"
+                                                                                                @click="openQuitar=false"
+                                                                                                class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl border border-gray-300 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition">
+                                                                                            <i class="fas fa-xmark"></i>
+                                                                                            Cancelar
+                                                                                        </button>
+
+                                                                                        <form method="POST" action="{{ route('admin.dependencias.quitar') }}">
+                                                                                            @csrf
+                                                                                            <input type="hidden" name="user_id" value="{{ $u->id }}">
+
+                                                                                            <button type="submit"
+                                                                                                    class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-600 text-white text-sm font-semibold shadow-sm hover:bg-amber-700 transition">
+                                                                                                <i class="fas fa-check"></i>
+                                                                                                Sí, quitar usuario
+                                                                                            </button>
+                                                                                        </form>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
                                                                     </td>
                                                                 </tr>
                                                             @empty
@@ -354,4 +444,5 @@
 
         </div>
     </div>
+
 </x-app-layout>

@@ -454,6 +454,33 @@
                 await this.saveAll();
                 window.location.href = payload.previewUrl;
             },
+
+            t6CostoConIva(row) {
+                const ord = Number(row.orden || 0);
+
+                // Si no hay orden, usa lo que venga de BD (fallback)
+                const fallback = Number(row.costo ?? 0) || 0;
+
+                if (!ord) return fallback;
+
+                // Buscar la fila correspondiente en Tabla 7 por "orden"
+                const espec = this.form.tabla7.find(r => Number(r.orden || 0) === ord);
+                if (!espec) return fallback;
+
+                const cant = Number(espec.cantidad || 0);
+                const pu = (espec.precio_unitario === null ||
+                            espec.precio_unitario === '' ||
+                            espec.precio_unitario === undefined)
+                    ? null
+                    : Number(espec.precio_unitario);
+
+                if (pu === null || Number.isNaN(pu)) return fallback;
+
+                const importeSinIva = cant * pu;
+                const conIva = importeSinIva * 1.16;
+                return Math.round(conIva * 100) / 100;
+            },
+
         }));
     });
 </script>
@@ -857,7 +884,9 @@
                                                     <td class="px-3 py-2 border" x-text="r.subprograma"></td>
                                                     <td class="px-3 py-2 border" x-text="r.partida_bien_servicio"></td>
                                                     <td class="px-3 py-2 border">
-                                                        <span class="font-mono" x-text="(r.costo ?? 0).toLocaleString('es-MX', {style:'currency', currency:'MXN'})"></span>
+                                                        <span class="font-mono"
+                                                            x-text="t6CostoConIva(r).toLocaleString('es-MX', {style:'currency', currency:'MXN'})">
+                                                        </span>
                                                     </td>
                                                     <td class="px-3 py-2 border">
                                                         <input type="text" x-model="r.unidad_medida"
@@ -884,7 +913,10 @@
                                 </div>
 
                                 <p class="text-xs text-gray-500 mt-3">
-                                    * “Costo del bien o servicio” se actualiza automático desde Tabla 7 (Total con IVA).
+                                    * El “Costo del bien o servicio (con IVA)” se calcula a partir de la
+                                    <span class="font-semibold">Tabla 7</span> (cantidad × precio unitario × 1.16).
+                                    La cifra que ves aquí se recalcula al capturar los datos y se guarda de forma definitiva
+                                    cuando presionas <span class="font-semibold">“Guardar sección”</span>.
                                 </p>
                             </div>
 
@@ -998,9 +1030,11 @@
                                             <div class="px-3 py-2 font-mono font-semibold" x-text="t7Total().toLocaleString('es-MX', {style:'currency', currency:'MXN'})"></div>
                                         </div>
                                     </div>
-
                                     <p class="text-xs text-gray-500 mt-3">
-                                        * Al guardar Tabla 7, el sistema actualiza Tabla 6: “Costo (con IVA)” por bien.
+                                        * Estos totales son calculados en tiempo real para tu referencia.
+                                        Al dar clic en <span class="font-semibold">“Guardar sección”</span>,
+                                        el sistema actualiza la <span class="font-semibold">Tabla 6</span> con el costo con IVA
+                                        de cada bien y esos valores son los que se utilizarán en el PDF del expediente.
                                     </p>
                                 </div>
                             </div>

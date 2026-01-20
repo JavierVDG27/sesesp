@@ -10,17 +10,18 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-protected $fillable = [
-    'nombres',
-    'apellido_paterno',
-    'apellido_materno',
-    'email',
-    'password',
-    'role_id',
-    'institucion_id',
-    'subdependencia_id',
-    'activo',
-];
+    protected $fillable = [
+        'nombres',
+        'apellido_paterno',
+        'apellido_materno',
+        'curp',
+        'email',
+        'password',
+        'role_id',
+        'institucion_id',
+        'subdependencia_id',
+        'activo',
+    ];
 
     protected $hidden = [
         'password',
@@ -31,9 +32,15 @@ protected $fillable = [
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'activo' => 'boolean',
+            'password'          => 'hashed',
+            'activo'            => 'boolean',
         ];
+    }
+
+    // Normalizar CURP a mayúsculas y sin espacios
+    public function setCurpAttribute($value): void
+    {
+        $this->attributes['curp'] = $value ? strtoupper(trim($value)) : null;
     }
 
     public function role()

@@ -148,7 +148,10 @@
                                     <div class="min-h-[18px] mt-2">
                                         <p class="text-xs text-gray-500 flex items-start gap-2">
                                             <i class="fas fa-circle-info text-gray-400 mt-0.5"></i>
-                                            <span>Se lee desde fila 77 (desglose). Encabezados/total se ignoran.</span>
+                                            <span>
+                                                Recuerda: la plantilla asume encabezados en la fila 77 y que los datos del catálogo
+                                                comienzan a partir de la fila 78. No cambies el nombre ni el orden de las columnas.
+                                            </span>
                                         </p>
                                     </div>
                                 </form>
@@ -849,12 +852,14 @@
                                         </details>
 
                                         <form method="POST"
-                                              action="{{ route('admin.fasp.destroyRow', $r->id) }}"
-                                              onsubmit="return confirm('¿Quieres borrar SOLO este registro: {{ $codigo }} ?');"
-                                              class="inline-block ml-2">
+                                            action="{{ route('admin.fasp.destroyRow', $r->id) }}"
+                                            class="inline-block ml-2 delete-row-form">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="inline-flex items-center gap-2 text-red-700 font-semibold hover:underline">
+                                            <button type="button"
+                                                    onclick="openDeleteRowModal(this)"
+                                                    data-label="{{ $codigo }}"
+                                                    class="inline-flex items-center gap-2 text-red-700 font-semibold hover:underline">
                                                 <i class="fas fa-trash"></i>
                                                 Eliminar
                                             </button>
@@ -1037,4 +1042,76 @@
     <style>
         [x-cloak] { display: none !important; }
     </style>
+
+    {{-- Modal eliminar registro del catálogo --}}
+    <div id="delete-row-modal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-red-600"></i>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        Confirmar eliminación
+                    </h3>
+                    <p id="delete-row-text" class="mt-2 text-sm text-gray-600">
+                        ¿Quieres borrar SOLO este registro?
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button"
+                        id="delete-row-cancel"
+                        class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50">
+                    Cancelar
+                </button>
+                <button type="button"
+                        id="delete-row-confirm"
+                        class="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700">
+                    Sí, eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let deleteRowModal = document.getElementById('delete-row-modal');
+        let deleteRowText  = document.getElementById('delete-row-text');
+        let deleteRowForm  = null;
+
+        function openDeleteRowModal(button) {
+            const form  = button.closest('form');
+            const label = button.dataset.label || '';
+
+            deleteRowForm = form;
+            deleteRowText.textContent = '¿Quieres borrar SOLO este registro: ' + label + ' ?';
+
+            deleteRowModal.classList.remove('hidden');
+        }
+
+        document.getElementById('delete-row-cancel').addEventListener('click', function () {
+            deleteRowModal.classList.add('hidden');
+            deleteRowForm = null;
+        });
+
+        document.getElementById('delete-row-confirm').addEventListener('click', function () {
+            if (deleteRowForm) {
+                deleteRowModal.classList.add('hidden');
+                deleteRowForm.submit();
+            }
+        });
+
+        // Cerrar modal si hacen clic en el fondo oscuro
+        deleteRowModal.addEventListener('click', function (e) {
+            if (e.target === deleteRowModal) {
+                deleteRowModal.classList.add('hidden');
+                deleteRowForm = null;
+            }
+        });
+    </script>
+
 </x-app-layout>

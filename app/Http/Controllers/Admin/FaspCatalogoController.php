@@ -13,6 +13,8 @@ use Illuminate\Validation\Rule;
 use App\Models\FaspAsignacion;
 use App\Models\FaspAsignacionInstitucion;
 
+use Maatwebsite\Excel\Validators\ValidationException;
+
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Exports\FaspCatalogoPlantillaExport;
 
@@ -153,33 +155,60 @@ class FaspCatalogoController extends Controller
 
         $request->validate([
             'archivo' => 'required|file|mimes:xlsx,xls',
-            'year' => 'required|integer',
+            'year'    => 'required|integer',
         ]);
 
-        $year = (int) $request->year;
+        $year    = (int) $request->year;
         $entidad = '8300';
 
-        DB::transaction(function () use ($request, $year, $entidad, $tree, $rollup) {
+        try {
+            DB::transaction(function () use ($request, $year, $entidad, $tree, $rollup) {
 
-            // Desactivar asignaciones relacionadas
-            FaspAsignacionInstitucion::where('year', $year)
-                ->where('entidad', $entidad)
-                ->update(['active' => false]);
+                // 1) Desactivar asignaciones relacionadas
+                FaspAsignacionInstitucion::where('year', $year)
+                    ->where('entidad', $entidad)
+                    ->update(['active' => false]);
 
-            FaspAsignacion::where('year', $year)
-                ->where('entidad', $entidad)
-                ->update(['active' => false]);
+                FaspAsignacion::where('year', $year)
+                    ->where('entidad', $entidad)
+                    ->update(['active' => false]);
 
-            // borrar catálogo
-            FaspCatalogo::where('year', $year)->where('entidad', $entidad)->delete();
+                // 2) Borrar catálogo del año/entidad
+                FaspCatalogo::where('year', $year)
+                    ->where('entidad', $entidad)
+                    ->delete();
 
-            // importar
-            Excel::import(new \App\Imports\FaspCatalogoImportSheets($year), $request->file('archivo'));
+                // 3) Importar Excel
+                Excel::import(
+                    new \App\Imports\FaspCatalogoImportSheets($year),
+                    $request->file('archivo')
+                );
 
-            // reconstruir y recalcular
-            $tree->rebuildParents($year, $entidad);
-            $rollup->recalcularYearEntidad($year, $entidad);
-        });
+                // 4) Reconstruir árbol y recálculo
+                $tree->rebuildParents($year, $entidad);
+                $rollup->recalcularYearEntidad($year, $entidad);
+            });
+        } catch (ValidationException $e) {
+            // Errores de validación de Maatwebsite (formato de filas/columnas, etc.)
+            return back()
+                ->withErrors([
+                    'archivo' =>
+                        'Este archivo no tiene el formato a seguir del CATALOGO FASP. ' .
+                        'Verifica que uses la plantilla oficial y que los datos comiencen desde la fila 78, luego prueba otra vez.',
+                ])
+                ->withInput();
+        } catch (\Throwable $e) {
+            // Cualquier otro error inesperado en la importación
+            report($e);
+
+            return back()
+                ->withErrors([
+                    'archivo' =>
+                        'Ocurrió un error al importar el catálogo. ' .
+                        'Revisa que el archivo corresponda a la plantilla del CATALOGO FASP e inténtalo de nuevo.',
+                ])
+                ->withInput();
+        }
 
         return redirect()
             ->route('admin.fasp.index', ['year' => $year])

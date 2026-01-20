@@ -659,8 +659,15 @@ class ExpedienteSegundaParteController extends Controller
         [$detalle, $t6, $t7, $t8] = $this->buildTablas678ParaPDF($expediente);
         [$epsEje, $epsProg, $epsSub] = $this->buildEpsLabels($expediente);
 
+        $estatus = strtolower(str_replace('_', ' ', (string)($expediente->estatus ?? '')));
+        $esBorrador = !in_array($estatus, [
+            'aprobado',
+            'pendiente firma',
+            'firmado',
+        ], true);
+
         $pdf = Pdf::loadView('expedientes.segunda_parte.pdf', compact(
-            'expediente','detalle','t6','t7','t8','epsEje','epsProg','epsSub'
+            'expediente','detalle','t6','t7','t8','epsEje','epsProg','epsSub', 'esBorrador'
         ))->setPaper('letter')
         ->setOptions([
             'isPhpEnabled' => true,

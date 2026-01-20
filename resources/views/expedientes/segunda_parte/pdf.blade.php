@@ -115,6 +115,28 @@
     }
 @endphp
 
+@php
+    // Si el controlador no mandó la variable, por defecto NO es borrador
+    $esBorrador = $esBorrador ?? false;
+@endphp
+
+    {{-- Marca de agua para indicar que el expediente está en modo borrador --}}
+    @if($esBorrador)
+        <div style="
+            position: fixed;
+            top: 40%;
+            left: 8%;
+            right: 8%;
+            text-align: center;
+            opacity: 0.10;
+            font-size: 80px;
+            transform: rotate(-30deg);
+            color: #808080;
+        ">
+            BORRADOR
+        </div>
+    @endif
+
 <div style="page-break-after: always; padding-top:0;">
     <div style="margin-top:3cm; padding-top:0;">
         <div class="center upper cover-h1">{{ $detalle->titulo_documento }}</div>

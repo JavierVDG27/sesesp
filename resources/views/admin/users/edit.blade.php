@@ -80,6 +80,12 @@
                                         <i class="fas fa-envelope text-gray-400 mt-0.5"></i>
                                         <span class="break-words">{{ $user->email }}</span>
                                     </p>
+                                    @if($user->curp)
+                                        <p class="text-sm text-gray-600 break-words mt-1 flex items-start gap-2">
+                                            <i class="fas fa-id-card text-gray-400 mt-0.5"></i>
+                                            <span class="break-words uppercase">{{ $user->curp }}</span>
+                                        </p>
+                                    @endif
                                 </div>
 
                                 <div class="flex flex-wrap items-center gap-2">
@@ -148,6 +154,26 @@
                                         <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
+
+                                {{-- CURP --}}
+                                <div class="md:col-span-2">
+                                    <label for="curp" class="block text-sm font-semibold text-gray-700">
+                                        CURP <span class="text-red-600">*</span>
+                                    </label>
+                                    <input type="text" id="curp" name="curp"
+                                           value="{{ old('curp', $user->curp) }}"
+                                           maxlength="18"
+                                           style="text-transform: uppercase;"
+                                           required
+                                           class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm
+                                                  focus:ring-[#9F2241] focus:border-[#9F2241]" />
+                                    <p class="text-gray-500 text-xs mt-1">
+                                        Verifica que la CURP corresponda al usuario, se utiliza como identificador único.
+                                    </p>
+                                    @error('curp')
+                                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
 
@@ -157,7 +183,7 @@
                                 <span class="inline-flex items-center justify-center h-8 w-8 rounded-xl bg-[#9F2241]/10 text-[#9F2241] border border-[#9F2241]/15">
                                     <i class="fas fa-lock"></i>
                                 </span>
-                                <h4 class="font-semibold text-gray-800">Acceso</h4>
+                            <h4 class="font-semibold text-gray-800">Acceso</h4>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -199,27 +225,96 @@
                                 </div>
                             </div>
 
-                            {{-- Password (opcional) --}}
-                            <div>
+                            {{-- Password (opcional) con fuerza + confirmación --}}
+                            <div class="md:col-span-2" x-data="passwordHelper()">
                                 <label for="password" class="block text-sm font-semibold text-gray-700">
                                     Nueva contraseña (opcional)
                                 </label>
-                                <input type="password" id="password" name="password"
-                                       placeholder="Dejar vacío para no cambiar"
-                                       class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm
-                                              focus:ring-[#9F2241] focus:border-[#9F2241]" />
-                                <p class="text-sm text-gray-500 mt-2 flex items-start gap-2">
+
+                                {{-- Input contraseña --}}
+                                <div class="mt-1 relative">
+                                    <input :type="showPassword ? 'text' : 'password'"
+                                           x-model="password"
+                                           id="password"
+                                           name="password"
+                                           placeholder="Dejar vacío para no cambiar"
+                                           class="block w-full rounded-xl border-gray-300 shadow-sm pr-10
+                                                  focus:border-[#9F2241] focus:ring-[#9F2241]" />
+                                    <button type="button"
+                                            @click="showPassword = !showPassword"
+                                            class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                        <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                    </button>
+                                </div>
+
+                                {{-- Barra de fuerza --}}
+                                <div class="mt-3">
+                                    <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+                                        <span>Seguridad de la contraseña:</span>
+                                        <span x-text="strengthLabel"></span>
+                                    </div>
+                                    <div class="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                                        <div class="h-2 rounded-full transition-all duration-200"
+                                             :style="{ width: strengthPercent + '%' }"
+                                             :class="strengthClass"></div>
+                                    </div>
+                                </div>
+
+                                <p class="text-gray-500 text-sm mt-2 flex items-start gap-2">
                                     <i class="fas fa-circle-info text-gray-400 mt-0.5"></i>
-                                    <span>Mínimo 8 caracteres, 1 mayúscula, 1 minúscula, 1 número y 1 carácter especial.</span>
+                                    <span>
+                                        Mínimo 8 caracteres, incluir mayúsculas, minúsculas, números y un carácter especial.
+                                        Si no deseas cambiar la contraseña, deja los campos vacíos.
+                                    </span>
                                 </p>
+
                                 @error('password')
                                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                                 @enderror
+
+                                {{-- Confirmación de contraseña --}}
+                                <div class="mt-4">
+                                    <label for="password_confirmation" class="block text-sm font-semibold text-gray-700">
+                                        Confirmar nueva contraseña
+                                    </label>
+                                    <div class="mt-1 relative">
+                                        <input :type="showConfirm ? 'text' : 'password'"
+                                               x-model="confirm"
+                                               id="password_confirmation"
+                                               name="password_confirmation"
+                                               placeholder="Repita la nueva contraseña"
+                                               class="block w-full rounded-xl border-gray-300 shadow-sm pr-10
+                                                      focus:border-[#9F2241] focus:ring-[#9F2241]" />
+                                        <button type="button"
+                                                @click="showConfirm = !showConfirm"
+                                                class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                            <i :class="showConfirm ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                        </button>
+                                    </div>
+                                    <p class="text-xs mt-1" x-show="password || confirm" x-text="matchText" :class="matchClass"></p>
+                                </div>
                             </div>
                         </div>
 
-                        {{-- Institución + Subdependencia (manteniendo tu lógica) --}}
-                        <div class="space-y-4">
+                        {{-- Institución + Subdependencia --}}
+                        @php
+                            $subdepsByInst = $subdependencias
+                                ->groupBy('institucion_id')
+                                ->map(fn($items) => $items->map(fn($s) => ['id' => $s->id, 'nombre' => $s->nombre])->values())
+                                ->toArray();
+                        @endphp
+
+                        <div
+                            x-data="{
+                                institucionId: '{{ old('institucion_id', $user->institucion_id) }}',
+                                subdependenciaId: '{{ old('subdependencia_id', $user->subdependencia_id ?? '') }}',
+                                subdepsByInst: @js($subdepsByInst),
+                                get subdeps() {
+                                    return this.subdepsByInst[this.institucionId] ?? [];
+                                }
+                            }"
+                            class="space-y-4"
+                        >
                             <div class="flex items-center gap-2">
                                 <span class="inline-flex items-center justify-center h-8 w-8 rounded-xl bg-[#9F2241]/10 text-[#9F2241] border border-[#9F2241]/15">
                                     <i class="fas fa-building"></i>
@@ -227,99 +322,65 @@
                                 <h4 class="font-semibold text-gray-800">Asignación institucional</h4>
                             </div>
 
-                            @php
-                                $subdepsByInst = $subdependencias
-                                    ->groupBy('institucion_id')
-                                    ->map(fn($items) => $items->map(fn($s) => ['id' => $s->id, 'nombre' => $s->nombre])->values())
-                                    ->toArray();
-                            @endphp
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {{-- Institución --}}
+                                <div>
+                                    <label for="institucion_id" class="block text-sm font-semibold text-gray-700">
+                                        Institución <span class="text-red-600">*</span>
+                                    </label>
 
-                            <div
-                                x-data="{
-                                    institucionId: '{{ old('institucion_id', $user->institucion_id) }}',
-                                    subdependenciaId: '{{ old('subdependencia_id', $user->subdependencia_id ?? '') }}',
-                                    subdepsByInst: @js($subdepsByInst),
-                                    get subdeps() {
-                                        return this.subdepsByInst[this.institucionId] ?? [];
-                                    }
-                                }"
-                                x-init="$nextTick(() => { subdependenciaId = subdependenciaId })"
-                                class="space-y-6"
-                            >
+                                    <select
+                                        id="institucion_id"
+                                        name="institucion_id"
+                                        x-model="institucionId"
+                                        @change="subdependenciaId = ''"
+                                        required
+                                        class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm
+                                               focus:border-[#9F2241] focus:ring-[#9F2241]"
+                                    >
+                                        <option value="" disabled>Seleccione una institución</option>
+                                        @foreach($instituciones as $inst)
+                                            <option value="{{ $inst->id }}">
+                                                {{ $inst->siglas ? ($inst->siglas.' - '.$inst->nombre) : $inst->nombre }}
+                                            </option>
+                                        @endforeach
+                                    </select>
 
-                                {{-- Bloque original (conservado) --}}
-                                <div
-                                    x-data="{
-                                        institucionId: '{{ (string) old('institucion_id', $user->institucion_id) }}',
-                                        subdependenciaId: '{{ (string) old('subdependencia_id', $user->subdependencia_id ?? '') }}',
-                                        subdepsByInst: @js(
-                                            $subdependencias
-                                                ->groupBy('institucion_id')
-                                                ->map(fn($items) => $items->map(fn($sd) => ['id' => (string) $sd->id, 'nombre' => $sd->nombre])->values())
-                                        ),
-                                        getSubdeps() {
-                                            return this.subdepsByInst[this.institucionId] ?? [];
-                                        }
-                                    }"
-                                    class="grid grid-cols-1 md:grid-cols-2 gap-4"
-                                >
-                                    {{-- Institución --}}
-                                    <div>
-                                        <label for="institucion_id" class="block text-sm font-semibold text-gray-700">
-                                            Institución <span class="text-red-600">*</span>
-                                        </label>
-                                        <select
-                                            id="institucion_id"
-                                            name="institucion_id"
-                                            x-model="institucionId"
-                                            @change="subdependenciaId = ''"
-                                            required
-                                            class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm
-                                                   focus:ring-[#9F2241] focus:border-[#9F2241]"
-                                        >
-                                            <option value="" disabled>Seleccione una institución</option>
-                                            @foreach($instituciones as $inst)
-                                                <option value="{{ $inst->id }}">
-                                                    {{ $inst->siglas ? ($inst->siglas.' - '.$inst->nombre) : $inst->nombre }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                        @error('institucion_id')
-                                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                                        @enderror
-                                    </div>
-
-                                    {{-- Subdependencia --}}
-                                    <div>
-                                        <label for="subdependencia_id" class="block text-sm font-semibold text-gray-700">
-                                            Subdependencia (opcional)
-                                        </label>
-
-                                        <select
-                                            id="subdependencia_id"
-                                            name="subdependencia_id"
-                                            x-model="subdependenciaId"
-                                            class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm
-                                                   focus:ring-[#9F2241] focus:border-[#9F2241]"
-                                        >
-                                            <option value="">Sin subdependencia</option>
-
-                                            <template x-for="sd in getSubdeps()" :key="sd.id">
-                                                <option :value="sd.id" x-text="sd.nombre"></option>
-                                            </template>
-                                        </select>
-
-                                        <p class="text-sm text-gray-500 mt-2 flex items-start gap-2">
-                                            <i class="fas fa-circle-info text-gray-400 mt-0.5"></i>
-                                            <span>Si no aplica, deja “Sin subdependencia”.</span>
-                                        </p>
-
-                                        @error('subdependencia_id')
-                                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                                        @enderror
-                                    </div>
+                                    @error('institucion_id')
+                                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
                                 </div>
 
+                                {{-- Subdependencia --}}
+                                <div>
+                                    <label for="subdependencia_id" class="block text-sm font-semibold text-gray-700">
+                                        Subdependencia (opcional)
+                                    </label>
+
+                                    <select
+                                        id="subdependencia_id"
+                                        name="subdependencia_id"
+                                        x-model="subdependenciaId"
+                                        class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm
+                                               focus:border-[#9F2241] focus:ring-[#9F2241] disabled:bg-gray-100"
+                                        :disabled="!institucionId || subdeps.length === 0"
+                                    >
+                                        <option value="">Sin subdependencia</option>
+
+                                        <template x-for="s in subdeps" :key="s.id">
+                                            <option :value="s.id" x-text="s.nombre"></option>
+                                        </template>
+                                    </select>
+
+                                    <p class="text-sm text-gray-500 mt-2 flex items-start gap-2">
+                                        <i class="fas fa-circle-info text-gray-400 mt-0.5"></i>
+                                        <span>Si no aplica, deja “Sin subdependencia”.</span>
+                                    </p>
+
+                                    @error('subdependencia_id')
+                                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
 
@@ -352,4 +413,80 @@
 
         </div>
     </div>
+
+    {{-- Script para helper de contraseña --}}
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('passwordHelper', () => ({
+                password: '',
+                confirm: '',
+                showPassword: false,
+                showConfirm: false,
+
+                get strengthScore() {
+                    const p = this.password || '';
+
+                    if (!p.length) return 0;
+
+                    let variations = 0;
+                    if (/[a-z]/.test(p)) variations++;
+                    if (/[A-Z]/.test(p)) variations++;
+                    if (/[0-9]/.test(p)) variations++;
+                    if (/[^A-Za-z0-9]/.test(p)) variations++;
+
+                    let score = 0;
+
+                    if (p.length >= 8 && variations >= 2) score = 1;
+                    if (p.length >= 10 && variations >= 3) score = 2;
+                    if (p.length >= 12 && variations >= 3) score = 3;
+
+                    return score;
+                },
+
+                get strengthPercent() {
+                    switch (this.strengthScore) {
+                        case 1: return 33;
+                        case 2: return 66;
+                        case 3: return 100;
+                        default: return 0;
+                    }
+                },
+
+                get strengthLabel() {
+                    switch (this.strengthScore) {
+                        case 1: return 'Débil';
+                        case 2: return 'Aceptable';
+                        case 3: return 'Fuerte';
+                        default: return 'Sin evaluar';
+                    }
+                },
+
+                get strengthClass() {
+                    switch (this.strengthScore) {
+                        case 1: return 'bg-red-500';
+                        case 2: return 'bg-yellow-400';
+                        case 3: return 'bg-green-500';
+                        default: return 'bg-gray-300';
+                    }
+                },
+
+                get matchText() {
+                    if (!this.password && !this.confirm) return '';
+                    if (!this.confirm) return 'Escribe la confirmación de la contraseña.';
+                    return this.password === this.confirm
+                        ? 'Las contraseñas coinciden.'
+                        : 'Las contraseñas no coinciden.';
+                },
+
+                get matchClass() {
+                    if (!this.password && !this.confirm) return '';
+                    if (!this.confirm) return 'text-gray-500';
+                    return this.password === this.confirm
+                        ? 'text-green-600'
+                        : 'text-red-600';
+                },
+            }));
+        });
+    </script>
+
 </x-app-layout>

@@ -43,8 +43,14 @@
             @endif
 
             @php
-                $estatus = strtolower($expediente->estatus ?? 'borrador');
-                $bloqueado = in_array($estatus, ['en validacion','en_validacion','aprobado'], true);
+                $estatus = strtolower((string)($expediente->estatus ?? 'borrador'));
+                $estatus = str_replace('_', ' ', $estatus);
+
+                // Bloqueo de captura
+                $bloqueado = in_array($estatus, ['en validacion', 'aprobado'], true);
+
+                // Consideramos borrador todo lo que no sea aprobado / pendiente firma / firmado
+                $esBorrador = !in_array($estatus, ['aprobado', 'pendiente firma', 'firmado'], true);
             @endphp
 
             <div class="bg-white shadow-lg rounded-2xl p-6">
@@ -89,6 +95,27 @@
                         @endif
                     </div>
                 </div>
+
+                {{-- Aviso de modo borrador / definitivo --}}
+                @if($esBorrador)
+                    <div class="mb-4 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
+                        <div class="font-semibold mb-1">Expediente en modo borrador</div>
+                        <p>
+                            La vista previa del PDF se genera con una marca de agua 
+                            <span class="font-bold">“BORRADOR”</span> en todas las páginas.
+                            Cuando el expediente sea <span class="font-semibold">aprobado</span>,
+                            el PDF dejará de mostrar esta marca.
+                        </p>
+                    </div>
+                @else
+                    <div class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                        <div class="font-semibold mb-1">Expediente definitivo</div>
+                        <p>
+                            Este expediente ya no está en modo borrador. El PDF se genera
+                            <span class="font-semibold">sin marca de agua</span>.
+                        </p>
+                    </div>
+                @endif
 
                 {{-- Checklist --}}
                 <div class="rounded-xl border border-gray-200 bg-gray-50 p-4 mb-4">

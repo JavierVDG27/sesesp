@@ -112,6 +112,26 @@
                                         <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                                     @enderror
                                 </div>
+
+                                {{-- CURP --}}
+                                <div class="md:col-span-2">
+                                    <label for="curp" class="block text-sm font-semibold text-gray-700">
+                                        CURP <span class="text-red-600">*</span>
+                                    </label>
+                                    <input type="text" name="curp" id="curp"
+                                           value="{{ old('curp') }}"
+                                           maxlength="18"
+                                           style="text-transform: uppercase;"
+                                           required
+                                           class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm
+                                                  focus:border-[#9F2241] focus:ring-[#9F2241]" />
+                                    <p class="text-gray-500 text-xs mt-1">
+                                        Verifica que la CURP sea exactamente la del usuario, se utilizará como identificador único.
+                                    </p>
+                                    @error('curp')
+                                        <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
 
@@ -149,9 +169,9 @@
                                             required
                                             class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm
                                                    focus:border-[#9F2241] focus:ring-[#9F2241]">
-                                        <option value="" disabled selected>Seleccione un rol</option>
+                                        <option value="" disabled {{ old('role_id') ? '' : 'selected' }}>Seleccione un rol</option>
                                         @foreach($roles as $role)
-                                            <option value="{{ $role->id }}">
+                                            <option value="{{ $role->id }}" @selected(old('role_id') == $role->id)>
                                                 {{ ucfirst($role->name) }}
                                             </option>
                                         @endforeach
@@ -161,27 +181,74 @@
                                     @enderror
                                 </div>
 
-                                {{-- Password --}}
-                                <div class="md:col-span-2">
+                                {{-- Password + confirmación + fuerza --}}
+                                <div class="md:col-span-2" x-data="passwordHelper()">
                                     <label for="password" class="block text-sm font-semibold text-gray-700">
                                         Contraseña <span class="text-red-600">*</span>
                                     </label>
-                                    <input type="password" name="password" id="password"
-                                           placeholder="Mínimo 8 caracteres, incluir mayúsculas, minúsculas y números"
-                                           required
-                                           class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm
-                                                  focus:border-[#9F2241] focus:ring-[#9F2241]" />
+
+                                    {{-- Input contraseña --}}
+                                    <div class="mt-1 relative">
+                                        <input :type="showPassword ? 'text' : 'password'"
+                                               x-model="password"
+                                               name="password"
+                                               id="password"
+                                               placeholder="Mínimo 8 caracteres, incluir mayúsculas, minúsculas, números y símbolo"
+                                               required
+                                               class="block w-full rounded-xl border-gray-300 shadow-sm pr-10
+                                                      focus:border-[#9F2241] focus:ring-[#9F2241]" />
+                                        <button type="button"
+                                                @click="showPassword = !showPassword"
+                                                class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                            <i :class="showPassword ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                        </button>
+                                    </div>
+
+                                    {{-- Barra de fuerza --}}
+                                    <div class="mt-3">
+                                        <div class="flex items-center justify-between text-xs text-gray-500 mb-1">
+                                            <span>Seguridad de la contraseña:</span>
+                                            <span x-text="strengthLabel"></span>
+                                        </div>
+                                        <div class="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                                            <div class="h-2 rounded-full transition-all duration-200"
+                                                 :style="{ width: strengthPercent + '%' }"
+                                                 :class="strengthClass"></div>
+                                        </div>
+                                    </div>
 
                                     <p class="text-gray-500 text-sm mt-2 flex items-start gap-2">
                                         <i class="fas fa-circle-info text-gray-400 mt-0.5"></i>
                                         <span>
-                                            La contraseña debe tener al menos 8 caracteres e incluir letras mayúsculas, minúsculas y números.
+                                            La contraseña debe tener al menos 8 caracteres e incluir letras mayúsculas, minúsculas, números y un carácter especial.
                                         </span>
                                     </p>
 
                                     @error('password')
                                         <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                                     @enderror
+
+                                    {{-- Confirmación de contraseña --}}
+                                    <div class="mt-4">
+                                        <label for="password_confirmation" class="block text-sm font-semibold text-gray-700">
+                                            Confirmar contraseña <span class="text-red-600">*</span>
+                                        </label>
+                                        <div class="mt-1 relative">
+                                            <input :type="showConfirm ? 'text' : 'password'"
+                                                   x-model="confirm"
+                                                   name="password_confirmation"
+                                                   id="password_confirmation"
+                                                   required
+                                                   class="block w-full rounded-xl border-gray-300 shadow-sm pr-10
+                                                          focus:border-[#9F2241] focus:ring-[#9F2241]" />
+                                            <button type="button"
+                                                    @click="showConfirm = !showConfirm"
+                                                    class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600">
+                                                <i :class="showConfirm ? 'fas fa-eye-slash' : 'fas fa-eye'"></i>
+                                            </button>
+                                        </div>
+                                        <p class="text-xs mt-1" x-show="password || confirm" x-text="matchText" :class="matchClass"></p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -229,7 +296,7 @@
                                         x-model="institucionId"
                                         @change="subdependenciaId = ''"
                                     >
-                                        <option value="" disabled selected>Seleccione una institución</option>
+                                        <option value="" disabled {{ old('institucion_id') ? '' : 'selected' }}>Seleccione una institución</option>
 
                                         @foreach($instituciones as $inst)
                                             <option value="{{ $inst->id }}">
@@ -297,5 +364,80 @@
 
         </div>
     </div>
+
+    {{-- Script para helper de contraseña (fuerza + coincidencia) --}}
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('passwordHelper', () => ({
+                password: '',
+                confirm: '',
+                showPassword: false,
+                showConfirm: false,
+
+                get strengthScore() {
+                    const p = this.password || '';
+
+                    if (!p.length) return 0;
+
+                    let variations = 0;
+                    if (/[a-z]/.test(p)) variations++;
+                    if (/[A-Z]/.test(p)) variations++;
+                    if (/[0-9]/.test(p)) variations++;
+                    if (/[^A-Za-z0-9]/.test(p)) variations++;
+
+                    let score = 0;
+
+                    if (p.length >= 8 && variations >= 2) score = 1;
+                    if (p.length >= 10 && variations >= 3) score = 2;
+                    if (p.length >= 12 && variations >= 3) score = 3;
+
+                    return score;
+                },
+
+                get strengthPercent() {
+                    switch (this.strengthScore) {
+                        case 1: return 33;
+                        case 2: return 66;
+                        case 3: return 100;
+                        default: return 0;
+                    }
+                },
+
+                get strengthLabel() {
+                    switch (this.strengthScore) {
+                        case 1: return 'Débil';
+                        case 2: return 'Aceptable';
+                        case 3: return 'Fuerte';
+                        default: return 'Sin evaluar';
+                    }
+                },
+
+                get strengthClass() {
+                    switch (this.strengthScore) {
+                        case 1: return 'bg-red-500';
+                        case 2: return 'bg-yellow-400';
+                        case 3: return 'bg-green-500';
+                        default: return 'bg-gray-300';
+                    }
+                },
+
+                get matchText() {
+                    if (!this.password && !this.confirm) return '';
+                    if (!this.confirm) return 'Escribe la confirmación de la contraseña.';
+                    return this.password === this.confirm
+                        ? 'Las contraseñas coinciden.'
+                        : 'Las contraseñas no coinciden.';
+                },
+
+                get matchClass() {
+                    if (!this.password && !this.confirm) return '';
+                    if (!this.confirm) return 'text-gray-500';
+                    return this.password === this.confirm
+                        ? 'text-green-600'
+                        : 'text-red-600';
+                },
+            }));
+        });
+    </script>
 
 </x-app-layout>

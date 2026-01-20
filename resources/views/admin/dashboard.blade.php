@@ -192,7 +192,7 @@
                             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                                 <div>
                                     <h1 class="text-2xl md:text-3xl font-bold text-[#691C32]">
-                                        Bienvenido, {{ Auth::user()->name }}
+                                        Bienvenid@ {{ Auth::user()->name }}
                                     </h1>
                                     <p class="text-gray-600 mt-2">
                                         Desde este panel puedes administrar usuarios, dependencias y configuraciones del sistema.
