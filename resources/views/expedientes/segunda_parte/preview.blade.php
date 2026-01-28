@@ -82,10 +82,12 @@
                             </span>
                         @else
                             <form method="POST"
-                                  action="{{ route('expedientes.segunda.enviar', $expediente->id) }}"
-                                  onsubmit="this.querySelector('button[type=submit]').disabled=true; this.querySelector('button[type=submit]').innerText='Enviando...';">
+                                action="{{ route('expedientes.segunda.enviar', $expediente->id) }}"
+                                class="inline-block"
+                                id="enviar-expediente-form">
                                 @csrf
-                                <button type="submit"
+                                <button type="button"
+                                        onclick="openEnviarExpedienteModal()"
                                         class="inline-flex items-center px-3 py-2 rounded-md text-white text-sm font-semibold
                                         {{ $check['ok'] ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-300 cursor-not-allowed' }}"
                                         {{ $check['ok'] ? '' : 'disabled' }}>
@@ -145,5 +147,71 @@
 
             </div>
         </div>
+        {{-- Modal confirmar envío desde vista previa --}}
+        <div id="modal-enviar-expediente"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 hidden">
+            <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0">
+                        <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            Enviar expediente a revisión
+                        </h3>
+                        <p class="mt-2 text-sm text-gray-600">
+                            ¿Confirmas que deseas enviar este expediente a revisión?
+                            Después de enviarlo, ya no podrás editarlo mientras esté en revisión.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button"
+                            id="modal-enviar-cancel"
+                            class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50">
+                        Cancelar
+                    </button>
+                    <button type="button"
+                            id="modal-enviar-confirm"
+                            class="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700">
+                        Sí, enviar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const enviarModal = document.getElementById('modal-enviar-expediente');
+            const enviarForm  = document.getElementById('enviar-expediente-form');
+            const enviarBtn   = enviarForm ? enviarForm.querySelector('button[type="button"]') : null;
+
+            function openEnviarExpedienteModal() {
+                if (!enviarBtn || enviarBtn.disabled) return;
+                enviarModal.classList.remove('hidden');
+            }
+
+            document.getElementById('modal-enviar-cancel').addEventListener('click', () => {
+                enviarModal.classList.add('hidden');
+            });
+
+            document.getElementById('modal-enviar-confirm').addEventListener('click', () => {
+                if (!enviarForm) return;
+                if (enviarBtn) {
+                    enviarBtn.disabled = true;
+                    enviarBtn.innerText = 'Enviando...';
+                }
+                enviarModal.classList.add('hidden');
+                enviarForm.submit();
+            });
+
+            enviarModal.addEventListener('click', (e) => {
+                if (e.target === enviarModal) {
+                    enviarModal.classList.add('hidden');
+                }
+            });
+        </script>
     </div>
 </x-app-layout>

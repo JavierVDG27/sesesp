@@ -153,10 +153,16 @@ class FaspCatalogoController extends Controller
         ini_set('memory_limit', '512M');
         set_time_limit(0);
 
-        $request->validate([
-            'archivo' => 'required|file|mimes:xlsx,xls',
-            'year'    => 'required|integer',
-        ]);
+        $request->validate(
+            [
+                'archivo' => 'required|file|mimes:xlsx,xls',
+                'year'    => 'required|integer',
+            ],
+            [
+                'archivo.required' => 'Debes seleccionar un archivo.',
+                'archivo.mimes'    => 'El formato del archivo debe ser: xlsx, xls',
+            ]
+        );
 
         $year    = (int) $request->year;
         $entidad = '8300';

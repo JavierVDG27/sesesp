@@ -17,9 +17,9 @@ class UserManagementController extends Controller
      * Clave = nombre del rol (columna name en roles), valor = máximo permitido.
      */
     protected array $maxUsersByRole = [
-        'admin' => 6,
-        'validador' => 5,
-        'capturista' => 5,
+        'admin' => 3,
+        'validador' => 4,
+        'capturista' => 4,
     ];
 
     // LISTADO DE USUARIOS

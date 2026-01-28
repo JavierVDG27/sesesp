@@ -563,6 +563,12 @@
                                 <p class="text-sm text-gray-500 mt-1">
                                     Tip: puedes arrastrar dentro del área para moverte sin usar las barras de scroll.
                                 </p>
+                                <p class="mt-1 text-xs text-gray-500 flex items-start gap-2">
+                                    <i class="fas fa-circle-info text-gray-400 mt-0.5"></i>
+                                    <span>
+                                        Todas las cantidades mostradas en este catálogo están expresadas en pesos mexicanos (MXN).
+                                    </span>
+                                </p>
                             </div>
                         </div>
 

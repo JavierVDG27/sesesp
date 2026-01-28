@@ -43,7 +43,7 @@
         <div class="container mx-auto px-4 py-10">
             <div class="max-w-7xl mx-auto text-center">
                 <h1 class="text-4xl md:text-5xl font-bold mb-6">
-                    Gestión Eficiente de Expedientes Técnicos
+                    Gestión de Expedientes Técnicos
                 </h1>
                 <p class="text-xl mb-8 text-gray-100">
                     Sistema especializado para la administración y control de expedientes 

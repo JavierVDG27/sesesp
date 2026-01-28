@@ -386,7 +386,8 @@ window.__fasp = {
   const nombreAuto = document.getElementById('nombre_proyecto_auto');
 
   const nombreInput = document.getElementById('nombre_proyecto');
-
+// Flag para saber si el usuario ya editó el nombre manualmente
+let nombreProyectoDirty = nombreInput && nombreInput.value.trim() !== '';
   // ====== chips ======
   const chips = Array.from(document.querySelectorAll('.eps-chip'));
   const seleccionActual = document.getElementById('seleccion_actual');
@@ -616,8 +617,9 @@ window.__fasp = {
     setText(pgNombre, nombre);
     setText(nombreAuto, nombre);
 
-    if (nombre && (!nombreInput.value || nombreInput.value.trim() === '')) {
-      nombreInput.value = nombre;
+    // Si el usuario NO ha editado manualmente el nombre, sincronizarlo con la partida genérica
+    if (!nombreProyectoDirty && nombreInput) {
+      nombreInput.value = nombre || '';
     }
 
     const bienesKey = `${key}|${cap}|${con}|${pg}`;
@@ -731,6 +733,13 @@ window.__fasp = {
   selPG.addEventListener('change', () => onProyectoChange(false));
 
   // ====== init ======
+  // Marcar el nombre del proyecto como "editado" cuando el usuario escriba algo
+  if (nombreInput) {
+    nombreInput.addEventListener('input', () => {
+      nombreProyectoDirty = true;
+    });
+  }
+
   if (old.eje) {
     ejeSel.value = old.eje;
     onEjeChange(true);

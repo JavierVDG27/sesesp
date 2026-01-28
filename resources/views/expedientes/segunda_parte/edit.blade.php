@@ -157,6 +157,97 @@
             savedMsg: '',
             saveError: '',
 
+            enviarModalOpen: false,
+
+            checkRequiredForPreview() {
+                const missing = [];
+
+                // === Tabla 6 ===
+                if (Array.isArray(this.form.tabla6)) {
+                    this.form.tabla6.forEach((r, idx) => {
+                        const fila = idx + 1;
+                        if (!r.unidad_medida || String(r.unidad_medida).trim() === '') {
+                            missing.push(`Tabla 6 · Unidad de medida (fila ${fila})`);
+                        }
+                        if (r.meta_cantidad === null || r.meta_cantidad === undefined || String(r.meta_cantidad).trim() === '') {
+                            missing.push(`Tabla 6 · Meta (fila ${fila})`);
+                        }
+                        if (!r.aportacion || String(r.aportacion).trim() === '') {
+                            missing.push(`Tabla 6 · Aportación (fila ${fila})`);
+                        }
+                    });
+                }
+
+                // === Tabla 7 ===
+                if (Array.isArray(this.form.tabla7)) {
+                    this.form.tabla7.forEach((r, idx) => {
+                        const fila = idx + 1;
+                        if (!r.titulo_producto || String(r.titulo_producto).trim() === '') {
+                            missing.push(`Tabla 7 · Título del producto (fila ${fila})`);
+                        }
+                        const pu = (r.precio_unitario === '' || r.precio_unitario === null || r.precio_unitario === undefined)
+                            ? null
+                            : Number(r.precio_unitario);
+                        if (pu === null || Number.isNaN(pu)) {
+                            missing.push(`Tabla 7 · Precio unitario (fila ${fila})`);
+                        }
+                    });
+                }
+
+                // === Tabla 8 globales ===
+                if (!this.form.tabla8_fecha_entrega || this.form.tabla8_fecha_entrega.trim() === '') {
+                    missing.push('Tabla 8 · Fecha de entrega');
+                }
+                if (!this.form.tabla8_responsable_validar || this.form.tabla8_responsable_validar.trim() === '') {
+                    missing.push('Tabla 8 · Responsable de validar');
+                }
+                if (!this.form.tabla8_lugar_entrega || this.form.tabla8_lugar_entrega.trim() === '') {
+                    missing.push('Tabla 8 · Lugar de entrega');
+                }
+
+                // === Firmas (Validación) ===
+                if (!this.form.responsable_subprograma_nombre || this.form.responsable_subprograma_nombre.trim() === '') {
+                    missing.push('Validación · Nombre del responsable del subprograma');
+                }
+                if (!this.form.responsable_subprograma_cargo || this.form.responsable_subprograma_cargo.trim() === '') {
+                    missing.push('Validación · Cargo del responsable del subprograma');
+                }
+                if (!this.form.titular_dependencia_nombre || this.form.titular_dependencia_nombre.trim() === '') {
+                    missing.push('Validación · Nombre del titular de la dependencia');
+                }
+                if (!this.form.titular_dependencia_cargo || this.form.titular_dependencia_cargo.trim() === '') {
+                    missing.push('Validación · Cargo del titular de la dependencia');
+                }
+
+                return missing;
+            },
+
+            async confirmEnviar() {
+                if (this.saving) return;
+
+                // Reutilizamos las mismas reglas que para la vista previa
+                const missing = this.checkRequiredForPreview();
+                if (missing.length > 0) {
+                    this.saveError = 'Antes de enviar a revisión, completa los campos obligatorios: ' + missing.join('; ');
+                    this.enviarModalOpen = false;
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
+
+                this.saving = true;
+                this.saveError = '';
+
+                try {
+                    await this.saveAll();
+                    this.enviarModalOpen = false;
+                    this.$refs.enviarForm.submit();
+                } catch (e) {
+                    this.saveError = 'No se pudo guardar el expediente antes de enviarlo a revisión. Intenta nuevamente.';
+                } finally {
+                    this.saving = false;
+                }
+            },
+
             // Sub-tab del paso 5 (tablas)
             tablasTab: 't6', // t6 | t7 | t8
 
@@ -450,7 +541,13 @@
             },
 
             async openPdfPreview() {
-                // Guarda todo antes de abrir el PDF (misma pestaña)
+                const missing = this.checkRequiredForPreview();
+                if (missing.length > 0) {
+                    this.saveError = 'Antes de generar la vista previa PDF, completa los campos obligatorios: ' + missing.join('; ');
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    return;
+                }
+
                 await this.saveAll();
                 window.location.href = payload.previewUrl;
             },
@@ -503,6 +600,45 @@
                         ⤒ Ir al inicio
                     </button>
                 </div>
+    {{-- Modal confirmar envío a revisión --}}
+    <div x-show="enviarModalOpen"
+        style="display: none;"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6"
+            @click.away="enviarModalOpen = false">
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0">
+                    <div class="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-lg font-semibold text-gray-900">
+                        Enviar expediente a revisión
+                    </h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        Al enviar el expediente a revisión, la captura quedará <span class="font-semibold">bloqueada</span>
+                        mientras el área validadora revisa y aprueba/rechaza el expediente.
+                        ¿Deseas continuar?
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button"
+                        class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50"
+                        @click="enviarModalOpen = false">
+                    Cancelar
+                </button>
+                <button type="button"
+                        class="px-4 py-2 rounded-lg bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
+                        :disabled="saving"
+                        @click="confirmEnviar()">
+                    Sí, enviar a revisión
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
             {{-- Header --}}
@@ -859,6 +995,10 @@
                                     Tabla 8 · Entregables
                                 </button>
                             </div>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    Los campos marcados con <span class="text-red-500">*</span> son obligatorios para generar la vista previa del borrador
+                                    y para enviar el expediente a revisión.
+                                </p>
 
                             {{-- TABLA 6 --}}
                             <div x-show="tablasTab==='t6'" style="display:none;" class="rounded-xl border border-gray-200 p-5">
@@ -872,9 +1012,15 @@
                                                 <th class="px-3 py-2 border">Subprograma</th>
                                                 <th class="px-3 py-2 border">Partida específica / Bien o servicio</th>
                                                 <th class="px-3 py-2 border">Costo del bien o servicio (con IVA)</th>
-                                                <th class="px-3 py-2 border">Unidad de Medida</th>
-                                                <th class="px-3 py-2 border">Metas (Cantidad)</th>
-                                                <th class="px-3 py-2 border">Aportación (Federal/Estatal)</th>
+                                                <th class="px-3 py-2 border">
+                                                    Unidad de Medida <span class="text-red-500">*</span>
+                                                </th>
+                                                <th class="px-3 py-2 border">
+                                                    Metas (Cantidad) <span class="text-red-500">*</span>
+                                                </th>
+                                                <th class="px-3 py-2 border">
+                                                    Aportación (Federal/Estatal) <span class="text-red-500">*</span>
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -935,7 +1081,7 @@
                                                 </div>
 
                                                 <div class="md:col-span-9">
-                                                    <label class="block text-[11px] font-semibold text-gray-700 mb-1">Título (se usa también en Tabla 8)</label>
+                                                    <label class="block text-[11px] font-semibold text-gray-700 mb-1">Título (se usa también en Tabla 8) <span class="text-red-500">*</span></label>
                                                     <input type="text" x-model="r.titulo_producto"
                                                            class="w-full rounded-md border-gray-300 focus:border-[#691C32] focus:ring-[#691C32]"
                                                            placeholder="Ej. COMPUTADORA DE ESCRITORIO">
@@ -1000,7 +1146,7 @@
                                                 </div>
 
                                                 <div class="md:col-span-3">
-                                                    <label class="block text-[11px] font-semibold text-gray-700 mb-1">Precio Unitario</label>
+                                                    <label class="block text-[11px] font-semibold text-gray-700 mb-1">Precio Unitario <span class="text-red-500">*</span></label>
                                                     <input type="number" min="0" step="0.01" x-model.number="r.precio_unitario"
                                                            class="w-full rounded-md border-gray-300 focus:border-[#691C32] focus:ring-[#691C32]">
                                                 </div>
@@ -1076,7 +1222,7 @@
                                                     1
                                                 </div>
                                                 <div class="min-w-0">
-                                                    <div class="font-extrabold text-gray-900">Fecha de Entrega (texto)</div>
+                                                    <div class="font-extrabold text-gray-900">Fecha de Entrega (texto) <span class="text-red-500">*</span></div>
                                                     <div class="text-xs text-gray-500 mt-0.5">Describe claramente el plazo, horarios y condiciones de entrega.</div>
                                                 </div>
                                             </div>
@@ -1106,7 +1252,7 @@
                                                     2
                                                 </div>
                                                 <div class="min-w-0">
-                                                    <div class="font-extrabold text-gray-900">Responsable de Validar el Entregable (texto)</div>
+                                                    <div class="font-extrabold text-gray-900">Responsable de Validar el Entregable (texto) <span class="text-red-500">*</span></div>
                                                     <div class="text-xs text-gray-500 mt-0.5">Indica el cargo/área responsable de validar.</div>
                                                 </div>
                                             </div>
@@ -1136,7 +1282,7 @@
                                                     3
                                                 </div>
                                                 <div class="min-w-0">
-                                                    <div class="font-extrabold text-gray-900">Lugar de Entrega (texto)</div>
+                                                    <div class="font-extrabold text-gray-900">Lugar de Entrega (texto) <span class="text-red-500">*</span></div>
                                                     <div class="text-xs text-gray-500 mt-0.5">Especifica el domicilio o ubicación de entrega.</div>
                                                 </div>
                                             </div>
@@ -1255,6 +1401,9 @@
                         <section x-show="step === 7" class="space-y-4" style="display:none;">
                             <div class="rounded-xl border border-gray-200 p-5">
                                 <h4 class="font-semibold text-gray-800 mb-4">21. Validación del Expediente Técnico</h4>
+                                <p class="text-xs text-gray-500 mb-4">
+                                    Todos los campos de <span class="font-semibold">Nombre</span> y <span class="font-semibold">Cargo</span> son obligatorios.
+                                </p>
 
                                 <div class="border border-gray-300 rounded-lg overflow-hidden">
                                     <div class="bg-gray-50 text-center font-semibold py-2">
@@ -1267,14 +1416,14 @@
                                             <div class="text-center font-semibold mb-3">Responsable del Subprograma</div>
 
                                             <div class="mt-20 text-center">
-                                                <div class="font-semibold">Nombre</div>
+                                                <div class="font-semibold">Nombre <span class="text-red-500">*</span></div>
                                                 <input type="text" x-model="form.responsable_subprograma_nombre"
                                                        class="mt-2 w-full rounded-md border-gray-300 focus:border-[#691C32] focus:ring-[#691C32] text-center"
                                                        placeholder="Nombre completo">
                                             </div>
 
                                             <div class="mt-4 text-center">
-                                                <div class="font-semibold">Cargo</div>
+                                                <div class="font-semibold">Cargo <span class="text-red-500">*</span></div>
                                                 <input type="text" x-model="form.responsable_subprograma_cargo"
                                                        class="mt-2 w-full rounded-md border-gray-300 focus:border-[#691C32] focus:ring-[#691C32] text-center"
                                                        placeholder="Cargo">
@@ -1359,11 +1508,15 @@
                                         Vista previa PDF
                                     </button>
 
-                                    <form method="POST" action="{{ route('expedientes.segunda.enviar', $expediente->id) }}" class="inline">
+                                    <form method="POST"
+                                        action="{{ route('expedientes.segunda.enviar', $expediente->id) }}"
+                                        class="inline"
+                                        x-ref="enviarForm">
                                         @csrf
-                                        <button type="submit"
+                                        <button type="button"
                                                 class="inline-flex items-center px-3 py-2 rounded-md bg-green-600 text-white text-sm font-semibold hover:bg-green-700 disabled:opacity-50"
-                                                :disabled="saving">
+                                                :disabled="saving"
+                                                @click="enviarModalOpen = true">
                                             Enviar a revisión
                                         </button>
                                     </form>

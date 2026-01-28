@@ -261,10 +261,16 @@
                                                         {{ $a->institucion->nombre ?? ('ID '.$a->institucion_id) }}
                                                     </span>
 
-                                                    <form method="POST" action="{{ route('validador.fasp_asignaciones_institucion.quitar', $a) }}">
+                                                    <form method="POST"
+                                                        action="{{ route('validador.fasp_asignaciones_institucion.quitar', $a) }}"
+                                                        class="inline-block">
                                                         @csrf
                                                         @method('DELETE')
-                                                        <button class="inline-flex items-center justify-center gap-2 text-[11px] px-2.5 py-1.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 active:scale-[.99] transition">
+                                                        <button type="button"
+                                                                onclick="openDeleteInstitucionModal(this)"
+                                                                data-inst="{{ $a->institucion->nombre ?? ('ID '.$a->institucion_id) }}"
+                                                                data-subprograma="{{ $r->subprograma }}"
+                                                                class="inline-flex items-center justify-center gap-2 text-[11px] px-2.5 py-1.5 rounded-xl bg-red-600 text-white font-semibold hover:bg-red-700 active:scale-[.99] transition">
                                                             Quitar
                                                         </button>
                                                     </form>
@@ -325,6 +331,83 @@
 
         </div>
     </div>
+
+{{-- Modal para confirmar quitar institución --}}
+<div id="delete-institucion-modal"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 hidden">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+        <div class="flex items-start gap-3">
+            <div class="flex-shrink-0">
+                <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                </div>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    Quitar institución
+                </h3>
+                <p id="delete-institucion-text" class="mt-2 text-sm text-gray-600">
+                    ¿Quieres quitar esta institución de este subprograma?
+                </p>
+            </div>
+        </div>
+
+        <div class="mt-6 flex justify-end gap-3">
+            <button type="button"
+                    id="delete-institucion-cancel"
+                    class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50">
+                Cancelar
+            </button>
+            <button type="button"
+                    id="delete-institucion-confirm"
+                    class="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700">
+                Sí, quitar
+            </button>
+        </div>
+    </div>
+</div>
+    <script>
+        let deleteInstModal = document.getElementById('delete-institucion-modal');
+        let deleteInstText  = document.getElementById('delete-institucion-text');
+        let deleteInstForm  = null;
+
+        function openDeleteInstitucionModal(button) {
+            deleteInstForm = button.closest('form');
+
+            const inst = button.dataset.inst || 'esta institución';
+            const sub  = button.dataset.subprograma || '';
+
+            if (sub) {
+                deleteInstText.textContent =
+                    '¿Quieres quitar la institución "' + inst + '" del subprograma ' + sub + '?';
+            } else {
+                deleteInstText.textContent =
+                    '¿Quieres quitar la institución "' + inst + '" de esta asignación?';
+            }
+
+            deleteInstModal.classList.remove('hidden');
+        }
+
+        document.getElementById('delete-institucion-cancel').addEventListener('click', function () {
+            deleteInstModal.classList.add('hidden');
+            deleteInstForm = null;
+        });
+
+        document.getElementById('delete-institucion-confirm').addEventListener('click', function () {
+            if (deleteInstForm) {
+                deleteInstModal.classList.add('hidden');
+                deleteInstForm.submit();
+            }
+        });
+
+        // Cerrar modal al hacer clic en el fondo oscuro
+        deleteInstModal.addEventListener('click', function (e) {
+            if (e.target === deleteInstModal) {
+                deleteInstModal.classList.add('hidden');
+                deleteInstForm = null;
+            }
+        });
+    </script>
 
     <script>
         // Drag-to-scroll horizontal para la tabla (mouse/touchpad)
